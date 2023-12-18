@@ -52,3 +52,43 @@ def get_city_state_from_coordinates(latitude, longitude):
     else:
         print(f"Failed to retrieve data. Status code: {response.status_code}")
         return None, None
+
+
+def decode_polyline(polyline_str):
+    index = 0
+    coordinates = []
+    current_lat = 0
+    current_lng = 0
+
+    while index < len(polyline_str):
+        shift = 0
+        result = 0
+
+        while True:
+            byte = ord(polyline_str[index]) - 63
+            index += 1
+            result |= (byte & 0x1F) << shift
+            shift += 5
+            if byte < 0x20:
+                break
+
+        d_lat = ~(result >> 1) if result & 1 else (result >> 1)
+        current_lat += d_lat
+
+        shift = 0
+        result = 0
+
+        while True:
+            byte = ord(polyline_str[index]) - 63
+            index += 1
+            result |= (byte & 0x1F) << shift
+            shift += 5
+            if byte < 0x20:
+                break
+
+        d_lng = ~(result >> 1) if result & 1 else (result >> 1)
+        current_lng += d_lng
+
+        coordinates.append((current_lat / 1e5, current_lng / 1e5))
+
+    return coordinates
