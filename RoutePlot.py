@@ -1,7 +1,7 @@
 import folium
 from util import decode_polyline
 import xyzservices.providers as xyz
-from math import radians, sin, cos, sqrt, atan2, log2
+from math import radians, sin, cos, sqrt, atan2, log2, log10, pi
 
 
 class RoutePlot:
@@ -25,7 +25,7 @@ class RoutePlot:
 
     def get_zoom_start(self, radius):
         scale = radius / 500
-        zoomLevel = int((16 - log2(scale) / log2(2)))
+        zoomLevel = int((17 - log10(scale) / log10(2)))
         return zoomLevel
 
     def exec(self, polyline):
@@ -53,22 +53,22 @@ class RoutePlot:
 
             # Approximate the radius using the total distance
             radius = total_distance / (
-                2 * 3.14159
+                2 * pi
             )  # Divide by 2π to get an approximate radius
             return radius
 
         coordinates = decode_polyline(polyline)
         radius = calculate_radius(coordinates)
-        print(radius)
+        print("radius", radius)
         zoom_start = self.get_zoom_start(radius)
-
         print(zoom_start)
+        # Don't know why + 1 is always better
 
         center = self.calculate_center(coordinates)
 
         # Create a folium map centered at a location
         # tiles='https://{s}.tiles.example.com/{z}/{x}/{y}.png'
-        m = folium.Map(location=center, zoom_start=zoom_start + 1)
+        m = folium.Map(location=center, zoom_start=zoom_start)
 
         # folium.TileLayer(
         #     tiles=xyz.CartoDB.Positron.url, attr=xyz.CartoDB.Positron.attribution
