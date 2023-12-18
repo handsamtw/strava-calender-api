@@ -1,4 +1,5 @@
 import requests
+from math import radians, log10, pi, sin, cos, atan2, sqrt
 
 
 def human_readable_time(seconds):
@@ -92,3 +93,53 @@ def decode_polyline(polyline_str):
         coordinates.append((current_lat / 1e5, current_lng / 1e5))
 
     return coordinates
+
+
+def calculate_distance(coord1, coord2):
+    # Calculate distance (in kilometers) between two coordinates using Haversine formula
+    R = 6371.0  # Earth radius in kilometers
+
+    lat1, lon1 = radians(coord1[0]), radians(coord1[1])
+    lat2, lon2 = radians(coord2[0]), radians(coord2[1])
+
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+
+    distance = R * c
+    return distance * 1000  # Convert to meters
+
+
+def calculate_radius(coordinates):
+    total_distance = 0
+    # Calculate the total distance covered by the route
+    for i in range(len(coordinates) - 1):
+        total_distance += calculate_distance(coordinates[i], coordinates[i + 1])
+
+    # Approximate the radius using the total distance
+    radius = total_distance / (2 * pi)  # Divide by 2π to get an approximate radius
+    return radius
+
+
+def get_zoom_start(radius):
+    scale = radius / 500
+    zoomLevel = int((17 - log10(scale) / log10(2)))
+    return zoomLevel
+
+
+def calculate_center(coordinates):
+    # Ensure coordinates are not empty
+    if not coordinates:
+        return None
+
+    # Extract latitudes and longitudes into separate lists
+    latitudes = [coord[0] for coord in coordinates]
+    longitudes = [coord[1] for coord in coordinates]
+
+    # Calculate average latitudes and longitudes
+    avg_lat = sum(latitudes) / len(coordinates)
+    avg_lon = sum(longitudes) / len(coordinates)
+
+    return [avg_lat, avg_lon]

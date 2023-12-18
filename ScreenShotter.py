@@ -3,7 +3,7 @@ import time
 import os
 
 
-class ScreenShooter:
+class ScreenShotter:
     def __init__(self):
         pass
 
@@ -25,16 +25,30 @@ class ScreenShooter:
         # Initialize Chrome driver
         # driver = webdriver.Chrome(executable_path=driver_path, options=chrome_options)
         driver = webdriver.Chrome()
-        # the current window size
-        window_size = driver.get_window_size()
 
-        resize_ratio = 0.9
-        new_height = int(window_size["height"] * resize_ratio)
-        new_width = int(window_size["width"] * resize_ratio)
-        driver.set_window_size(new_width, new_height)
-        # Open the HTML file in Chrome
         driver.get(html_path)
         time.sleep(0.25)
+        # the current window size
+        window_size = driver.get_window_size()
+        resize_ratio = 0.9
+
+        # Calculate the dimensions for an 80% square from the center
+        min_side = int(
+            min(window_size["width"], window_size["height"]) * resize_ratio
+        )  # 80% of the minimum side length
+        x = int(
+            (window_size["width"] - min_side) / 2
+        )  # X coordinate for the left edge of the square
+        y = int(
+            (window_size["height"] - min_side) / 2
+        )  # Y coordinate for the top edge of the square
+
+        # Set the window size to capture the desired square area
+        driver.set_window_size(min_side, min_side)
+
+        # Scroll to the calculated coordinates (optional)
+        driver.execute_script(f"window.scrollTo({x}, {y});")
+
         # Take a screenshot of the loaded HTML file
         driver.save_screenshot(export_path)
 
