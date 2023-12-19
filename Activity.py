@@ -7,7 +7,7 @@ from constants import ACTIVITIES_URL
 class Activity:
     @classmethod
     def get_most_recent_activity_id(cls, access_token):
-        url = f"{{ACTIVITIES_URL}}?per_page=1&page=1"
+        url = f"{ACTIVITIES_URL}?per_page=1&page=1"
         headers = {"Authorization": f"Bearer {access_token}"}
 
         response = requests.get(url, headers=headers)
@@ -27,7 +27,7 @@ class Activity:
     @classmethod
     def parse_activity(cls, id, access_token):
         headers = {"Authorization": f"Bearer {access_token}"}
-        url = f"{{ACTIVITIES_URL}}/{id}"
+        url = f"{ACTIVITIES_URL}/{id}"
         response = requests.get(url, headers=headers)
         data = response.json()
         pace = calculate_pace(data["distance"], data["moving_time"])

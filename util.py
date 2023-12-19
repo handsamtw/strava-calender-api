@@ -127,7 +127,7 @@ def calculate_center(coordinates):
 
 
 # if the token hasn't expire, will return the same token
-def refresh_token(refresh_token):
+def refresh_access_token(refresh_token):
     config = dotenv_values(".env")
     url = REFRESH_TOKEN_URL
     refresh_data = {
