@@ -48,9 +48,10 @@ class ImageProcessor:
 
         # Read the image data from the GridFS file object
         image_data = file_data.read()
+        return image_data
 
-        # Convert the bytes back to an image (PIL Image in this example)
-        img = Image.open(io.BytesIO(image_data))
+        # # Convert the bytes back to an image (PIL Image in this example)
+        # img = Image.open(io.BytesIO(image_data))
 
-        # Display or save the retrieved image as needed
-        img.show()  # Display the image
+        # # Display or save the retrieved image as needed
+        # img.show()  # Display the image
