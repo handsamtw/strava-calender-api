@@ -7,13 +7,12 @@ class ScreenShotter:
     def __init__(self):
         pass
 
-    def take_sreenshot(self, html_file_name, export_image_name):
+    def take_screenshot(self, html_file_name, export_image_name):
         # Path to your HTML file
 
         html_path = f"file://{os.path.join(os.getcwd(), html_file_name)}"
         # export_path = os.path.join(os.getcwd(), export_image_name)
         export_path = export_image_name
-        print(html_path, export_path)
         # Path to your ChromeDriver executable (download and specify the correct path)
 
         # Configure Chrome options

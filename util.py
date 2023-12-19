@@ -1,5 +1,6 @@
 import requests
 from math import radians, log10, pi, sin, cos, atan2, sqrt
+from dotenv import dotenv_values
 
 
 def human_readable_time(seconds):
@@ -144,3 +145,20 @@ def calculate_center(coordinates):
     avg_lon = sum(longitudes) / len(coordinates)
 
     return [avg_lat, avg_lon]
+
+
+def refresh_token():
+    config = dotenv_values(".env")
+    url = "https://www.strava.com/api/v3/oauth/token"
+    refresh_data = {
+        "client_id": config.get("CLIENT_ID"),
+        "client_secret": config.get("CLIENT_SECRET"),
+        "grant_type": "refresh_token",
+        "refresh_token": config.get("REFRESH_TOKEN"),
+    }
+    response = requests.post(url, data=refresh_data)
+    if response.status_code == 200:
+        return response.json()
+
+    else:
+        print(f"Failed to retrieve data. Status code: {response.status_code}")

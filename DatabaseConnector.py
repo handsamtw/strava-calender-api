@@ -5,7 +5,7 @@ import io
 from bson import ObjectId  # Import ObjectId from bson library
 
 
-class ImageProcessor:
+class DatabaseConnector:
     def __init__(self):
         self.client, self.db, self.fs = self.connect_mongodb()
 
@@ -18,7 +18,7 @@ class ImageProcessor:
         fs = GridFS(db)
         return client, db, fs
 
-    def save_img(self, image_path="path/to/your/image.jpg"):
+    def save_img(self, image_path):
         # Read the image file as bytes
         with open(image_path, "rb") as image_file:
             image_data = image_file.read()
@@ -39,19 +39,18 @@ class ImageProcessor:
         }
         users_collection.insert_one(user_data)
 
-    def retrieve_image(self, image_id):
-        # ID of the image you want to retrieve as an ObjectId
-        stored_file_id = ObjectId(image_id)
+    def retrieve_image(self, access_token):
+        users_collection = self.db["users"]
+        user_data = users_collection.find_one({"access_token": access_token})
+        if user_data:
+            stored_file_id = user_data["image_id"]
+            # Retrieve the image from MongoDB using GridFS by its ObjectId
+            file_data = self.fs.get(stored_file_id)
 
-        # Retrieve the image from MongoDB using GridFS by its ObjectId
-        file_data = self.fs.get(stored_file_id)
+            # Read the image data from the GridFS file object
+            image_data = file_data.read()
+            return image_data
 
-        # Read the image data from the GridFS file object
-        image_data = file_data.read()
-        return image_data
-
-        # # Convert the bytes back to an image (PIL Image in this example)
-        # img = Image.open(io.BytesIO(image_data))
-
-        # # Display or save the retrieved image as needed
-        # img.show()  # Display the image
+        else:
+            print("No store file found")
+            return
