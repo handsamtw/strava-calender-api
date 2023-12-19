@@ -20,7 +20,9 @@ Credit
 
 ## Connect And Grant Permission
 
-Click Connect with Strava button below to grant permission
+- Click `Connect with Strava` button below to grant permission
+
+[![Connect with Strava](img/btn-strava.png)](http://www.strava.com/oauth/authorize?client_id=117383&response_type=code&redirect_uri=http://localhost/exchange_token&approval_prompt=force&scope=activity:read_all)
 
 ## User flow
 
