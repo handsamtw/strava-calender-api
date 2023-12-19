@@ -22,9 +22,12 @@ class ScreenShotter:
             "--headless"
         )  # Run Chrome in headless mode (without opening a window)
 
+        chrome_options.add_argument(
+            "--disable-gpu"
+        )  # Disable GPU acceleration, which is recommended in headless mode
+
         # Initialize Chrome driver
-        # driver = webdriver.Chrome(executable_path=driver_path, options=chrome_options)
-        driver = webdriver.Chrome()
+        driver = webdriver.Chrome(options=chrome_options)
 
         driver.get(html_path)
         time.sleep(0.25)

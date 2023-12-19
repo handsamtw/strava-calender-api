@@ -33,6 +33,7 @@ def calculate_pace(distance_meters, duration_seconds):
     return formatted_pace
 
 
+# May be deprecated since Strava already provide good enough segment data
 def get_city_state_from_coordinates(latitude, longitude):
     # Initialize Nominatim geocoder
     # geolocator = Nominatim(user_agent="geoapiExercises")
