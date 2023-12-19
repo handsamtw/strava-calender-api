@@ -1,6 +1,7 @@
 import requests
 from math import radians, log10, pi, sin, cos, atan2, sqrt
 from dotenv import dotenv_values
+from datetime import datetime, timedelta
 
 
 def human_readable_time(seconds):
@@ -147,6 +148,7 @@ def calculate_center(coordinates):
     return [avg_lat, avg_lon]
 
 
+# if the token hasn't expire, will return the same token
 def refresh_token():
     config = dotenv_values(".env")
     url = "https://www.strava.com/api/v3/oauth/token"
@@ -162,3 +164,17 @@ def refresh_token():
 
     else:
         print(f"Failed to retrieve data. Status code: {response.status_code}")
+
+
+def expire_in_n_minutes(expire_timestamp, minutes=30):
+    # Convert expiration timestamp to a datetime object
+    expire_datetime = datetime.utcfromtimestamp(expire_timestamp)
+
+    # Get the current time
+    current_datetime = datetime.utcnow()
+
+    # Calculate the time difference
+    time_difference = expire_datetime - current_datetime
+
+    # Check if the expiration is within 30 minutes from the current time
+    return time_difference <= timedelta(minutes=minutes)

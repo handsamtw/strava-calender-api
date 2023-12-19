@@ -59,7 +59,6 @@ def get_image():
                 {"$set": {"image_id": ObjectId(image_id)}},
             )
 
-    print("image_id: ", image_id)
     image_data = fs.get(image_id).read()
     return Response(image_data, mimetype="image/png")
 
