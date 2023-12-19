@@ -1,4 +1,4 @@
-from RecentActivity import RecentActivity
+from Activity import RecentActivity
 from RoutePlot import RoutePlot
 from ScreenShotter import ScreenShotter
 from DatabaseConnector import ImageProcessor

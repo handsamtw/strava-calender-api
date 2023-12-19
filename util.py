@@ -2,6 +2,7 @@ import requests
 from math import radians, log10, pi, sin, cos, atan2, sqrt
 from dotenv import dotenv_values
 from datetime import datetime, timedelta
+from constants import REFRESH_TOKEN_URL
 
 
 def human_readable_time(seconds):
@@ -33,29 +34,6 @@ def calculate_pace(distance_meters, duration_seconds):
     formatted_pace = f"{pace_minutes}:{pace_seconds:02d}/km"
 
     return formatted_pace
-
-
-# May be deprecated since Strava already provide good enough segment data
-def get_city_state_from_coordinates(latitude, longitude):
-    # Initialize Nominatim geocoder
-    # geolocator = Nominatim(user_agent="geoapiExercises")
-
-    # # Reverse geocoding to get address details
-    # location = geolocator.reverse((latitude, longitude), exactly_one=True)
-    url = f"https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat={latitude}&lon={longitude}&zoom=13&addressdetails=1"
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        location = response.json()
-        if "address" in location:
-            address = location["address"]
-            return address["city"], address["state"]
-        else:
-            print("No 'address' field found in the response.")
-            return None, None
-    else:
-        print(f"Failed to retrieve data. Status code: {response.status_code}")
-        return None, None
 
 
 def decode_polyline(polyline_str):
@@ -149,14 +127,14 @@ def calculate_center(coordinates):
 
 
 # if the token hasn't expire, will return the same token
-def refresh_token():
+def refresh_token(refresh_token):
     config = dotenv_values(".env")
-    url = "https://www.strava.com/api/v3/oauth/token"
+    url = REFRESH_TOKEN_URL
     refresh_data = {
         "client_id": config.get("CLIENT_ID"),
         "client_secret": config.get("CLIENT_SECRET"),
         "grant_type": "refresh_token",
-        "refresh_token": config.get("REFRESH_TOKEN"),
+        "refresh_token": refresh_token,
     }
     response = requests.post(url, data=refresh_data)
     if response.status_code == 200:

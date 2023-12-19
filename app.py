@@ -1,7 +1,7 @@
 from flask import Flask, Response, request
 import io
 from DatabaseConnector import DatabaseConnector
-from RecentActivity import RecentActivity
+from Activity import Activity
 from RoutePlot import RoutePlot
 from ScreenShotter import ScreenShotter
 from pymongo import MongoClient
@@ -22,15 +22,14 @@ def get_image():
     access_token = request.args.get("access_token")
     refresh_token = request.args.get("refresh_token")
     user_data = users_collection.find_one({"access_token": access_token})
-    recent_activity_worker = RecentActivity(access_token=access_token)
-    recent_activity_id = recent_activity_worker.get_most_recent_activity_id()
+    recent_activity_id = Activity.get_most_recent_activity_id(access_token)
 
     # If the user exists and latest avtivity id = activity id, return image,
     if user_data and user_data["recent_activity_id"] == recent_activity_id:
         image_id = user_data["image_id"]
     else:
         # save token and image to database -> return image
-        activity_detail = recent_activity_worker.parse_activity(recent_activity_id)
+        activity_detail = Activity.parse_activity(recent_activity_id, access_token)
         if activity_detail["polyline"]:
             routePlot = RoutePlot()
             # this will generate an html
