@@ -32,8 +32,9 @@ class Activity:
         data = response.json()
         pace = calculate_pace(data["distance"], data["moving_time"])
         city, state = None, None
-        if "segment_effort" in data:
-            first_segment = data["segment_effort"][0]["segment"]
+
+        if "segment_efforts" in data:
+            first_segment = data["segment_efforts"][0]["segment"]
             city, state = first_segment["city"], first_segment["state"]
 
         return {

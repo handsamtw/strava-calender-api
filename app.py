@@ -1,13 +1,12 @@
-import io
 from Activity import Activity
 from RoutePlot import RoutePlot
 from ScreenShotter import ScreenShotter
 from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
-import io
 from util import expire_in_n_minutes, refresh_access_token
 from chalice import Chalice, Response
+from dotenv import dotenv_values
 
 # Here are a few more examples:
 #
@@ -23,17 +22,22 @@ from chalice import Chalice, Response
 #     # We'll echo the json body back to the user in a 'user' key.
 #     return {'user': user_as_json}
 #
+config = dotenv_values(".env")
 app = Chalice(app_name="strava-github-profile")
 
 
 @app.route("/")
 def index():
-    return {"hello": "world"}
+    return {"hello": config.get("MONGODB_PASSWORD")}
 
 
 # Connect to MongoDB
-client = MongoClient("mongodb://localhost:27017/")
-db = client["strava_github_profile"]
+mongopass = config.get("MONGODB_PASSWORD")
+uri = f"mongodb+srv://samliao:{mongopass}@cluster0.cfszocb.mongodb.net/?retryWrites=true&w=majority"
+
+# client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient(uri, username="samliao", password=mongopass)
+db = client["strava-github-profile"]
 users_collection = db["users"]
 fs = GridFS(db)
 
@@ -57,6 +61,7 @@ def get_image():
             user["refresh_token"],
             user["expires_at"],
         )
+
         if expire_in_n_minutes(expires_at, 30):
             resp = refresh_access_token(refresh_token)
             users_collection.update_one(
@@ -76,9 +81,10 @@ def get_image():
         image_id = user["image_id"]
         # If the user exists and latest avtivity id matches activity id, return image directly
         if user["recent_activity_id"] != recent_activity_id:
-            # save token and image to database -> return image
+            #         # save token and image to database -> return image
             activity_detail = Activity.parse_activity(recent_activity_id, access_token)
-            print("activity_detail", activity_detail)
+
+            # print("activity_detail", activity_detail)
             if activity_detail["polyline"]:
                 routePlot = RoutePlot()
                 # this will generate an html
