@@ -14,11 +14,15 @@ app = Chalice(app_name="strava-github-profile")
 mongopass = config.get("MONGODB_PASSWORD")
 uri = f"mongodb+srv://samliao:{mongopass}@cluster0.cfszocb.mongodb.net/?retryWrites=true&w=majority"
 
-# client = MongoClient("mongodb://localhost:27017/")
 client = MongoClient(uri, username="samliao", password=mongopass)
 db = client["strava-github-profile"]
 users_collection = db["users"]
 fs = GridFS(db)
+
+
+@app.route("/")
+def hello_world():
+    return "hello world"
 
 
 @app.route("/get_image")

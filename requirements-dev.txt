@@ -1,2 +1,6 @@
+Pillow==10.1.0
+folium==0.15.1
+geopy==2.4.1
+python-dotenv==1.0.0
+pymongo==4.3.3
 chalice==1.30.0
-pytest
