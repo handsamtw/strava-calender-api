@@ -77,7 +77,12 @@ def get_image():
             fs.delete(ObjectId(old_image_id))
             users_collection.update_one(
                 {"username": username, "access_token": access_token},
-                {"$set": {"image_id": ObjectId(image_id)}},
+                {
+                    "$set": {
+                        "image_id": ObjectId(image_id),
+                        "recent_activity_id": recent_activity_id,
+                    }
+                },
             )
 
     image_data = fs.get(image_id).read()
