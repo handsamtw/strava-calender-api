@@ -1,6 +1,4 @@
-from flask import Flask, Response, request
 import io
-from DatabaseConnector import DatabaseConnector
 from Activity import Activity
 from RoutePlot import RoutePlot
 from ScreenShotter import ScreenShotter
@@ -9,8 +7,30 @@ from gridfs import GridFS
 from bson import ObjectId
 import io
 from util import expire_in_n_minutes, refresh_access_token
+from chalice import Chalice, Response
 
-app = Flask(__name__)
+# Here are a few more examples:
+#
+# @app.route('/hello/{name}')
+# def hello_name(name):
+#    # '/hello/james' -> {"hello": "james"}
+#    return {'hello': name}
+#
+# @app.route('/users', methods=['POST'])
+# def create_user():
+#     # This is the JSON body the user sent in their POST request.
+#     user_as_json = app.current_request.json_body
+#     # We'll echo the json body back to the user in a 'user' key.
+#     return {'user': user_as_json}
+#
+app = Chalice(app_name="strava-github-profile")
+
+
+@app.route("/")
+def index():
+    return {"hello": "world"}
+
+
 # Connect to MongoDB
 client = MongoClient("mongodb://localhost:27017/")
 db = client["strava_github_profile"]
@@ -20,10 +40,11 @@ fs = GridFS(db)
 
 @app.route("/get_image")
 def get_image():
-    username = request.args.get("username")
-    if not username:
-        return Response("username must be provided in the your markdown")
+    params = app.current_request.query_params
 
+    if not params or not params.get("username"):
+        return Response("username must be provided in the your markdown")
+    username = params.get("username")
     user = users_collection.find_one({"username": username})
 
     if not user:
@@ -86,8 +107,4 @@ def get_image():
             )
 
     image_data = fs.get(image_id).read()
-    return Response(image_data, mimetype="image/png")
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
+    return Response(image_data, headers={"Content-Type": "image/png"})
