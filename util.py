@@ -1,12 +1,11 @@
 import requests
-from math import radians, log10, pi, sin, cos, atan2, sqrt
+from math import log2, floor
 from dotenv import dotenv_values
 from datetime import datetime, timedelta
 from constants import REFRESH_TOKEN_URL
 import folium
 from PIL import Image
-
-
+from geopy.distance import great_circle
 import io
 
 
@@ -81,56 +80,6 @@ def decode_polyline(polyline_str):
     return coordinates
 
 
-def calculate_distance(coord1, coord2):
-    # Calculate distance (in kilometers) between two coordinates using Haversine formula
-    R = 6371.0  # Earth radius in kilometers
-
-    lat1, lon1 = radians(coord1[0]), radians(coord1[1])
-    lat2, lon2 = radians(coord2[0]), radians(coord2[1])
-
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-
-    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-
-    distance = R * c
-    return distance * 1000  # Convert to meters
-
-
-def calculate_radius(coordinates):
-    total_distance = 0
-    # Calculate the total distance covered by the route
-    for i in range(len(coordinates) - 1):
-        total_distance += calculate_distance(coordinates[i], coordinates[i + 1])
-
-    # Approximate the radius using the total distance
-    radius = total_distance / (2 * pi)  # Divide by 2π to get an approximate radius
-    return radius
-
-
-def get_zoom_start(radius):
-    scale = radius / 500
-    zoomLevel = int((17 - log10(scale) / log10(2)))
-    return zoomLevel
-
-
-def calculate_center(coordinates):
-    # Ensure coordinates are not empty
-    if not coordinates:
-        return None
-
-    # Extract latitudes and longitudes into separate lists
-    latitudes = [coord[0] for coord in coordinates]
-    longitudes = [coord[1] for coord in coordinates]
-
-    # Calculate average latitudes and longitudes
-    avg_lat = sum(latitudes) / len(coordinates)
-    avg_lon = sum(longitudes) / len(coordinates)
-
-    return [avg_lat, avg_lon]
-
-
 # if the token hasn't expire, will return the same token
 def refresh_access_token(refresh_token):
     config = dotenv_values(".env")
@@ -173,15 +122,35 @@ def image_to_byte_array(image: Image) -> bytes:
     return imgByteArr
 
 
-def plot(polyline):
+def calculate_zoom_for_coordinates(coordinates, map_width_px=1450):
+    # Extract latitude and longitude values from the coordinates
+    latitudes = [coord[0] for coord in coordinates]
+    longitudes = [coord[1] for coord in coordinates]
+
+    # Calculate the bounding box of the coordinates
+    min_lat, max_lat = min(latitudes), max(latitudes)
+    min_lon, max_lon = min(longitudes), max(longitudes)
+    center = [(min_lat + max_lat) / 2, (min_lon + max_lon) / 2]
+
+    # Calculate the distance in meters between the diagonal corners of the bounding box
+    diagonal_distance = great_circle((min_lat, min_lon), (max_lat, max_lon)).meters
+
+    # Estimate the pixel width of the map (Google Maps assumes 256px tiles)
+    scaling_factor = log2(diagonal_distance / map_width_px)
+
+    # Calculate the initial zoom level based on the diagonal distance and pixel width
+    zoom_level = floor(16 - scaling_factor)
+    print(f"diagonal_distance: {diagonal_distance}, zoom_level: {zoom_level}")
+    return center, zoom_level
+
+
+def plot(polyline, cropped=True):
     coordinates = decode_polyline(polyline)
-    radius = calculate_radius(coordinates)
-    zoom_start = get_zoom_start(radius)
-    center = calculate_center(coordinates)
+    center, zoom_level = calculate_zoom_for_coordinates(coordinates)
 
     # Create a folium map centered at a location
     # tiles='https://{s}.tiles.example.com/{z}/{x}/{y}.png'
-    m = folium.Map(location=center, zoom_start=zoom_start)
+    m = folium.Map(location=center, zoom_start=zoom_level)
 
     # folium.TileLayer(
     #     tiles=xyz.CartoDB.Positron.url, attr=xyz.CartoDB.Positron.attribution
@@ -194,20 +163,21 @@ def plot(polyline):
         color="orange",
         line_cap="round",
     ).add_to(m)
+    # m.save(f"{saved_name}.html")
 
     img_data = m._to_png(0.3)
-    img = Image.open(io.BytesIO(img_data))
-    width, height = img.size
-    # Calculate the top-left corner to extract the center
-    size = min(width, height) * 0.9
+    if cropped:
+        img = Image.open(io.BytesIO(img_data))
+        width, height = img.size
+        # Calculate the top-left corner to extract the center
+        size = min(width, height) * 0.9
 
-    # Calculate the coordinates to crop the square
-    left = (width - size) / 2
-    top = (height - size) / 2
-    right = (width + size) / 2
-    bottom = (height + size) / 2
-
-    # Cropped image of above dimension
-    # (It will not change original image)
-    cropped_image = img.crop((left, top, right, bottom))
-    return image_to_byte_array(cropped_image)
+        # Calculate the coordinates to crop the square
+        left = (width - size) / 2
+        top = (height - size) / 2
+        right = (width + size) / 2
+        bottom = (height + size) / 2
+        cropped_image = img.crop((left, top, right, bottom))
+        return image_to_byte_array(cropped_image)
+    else:
+        return img_data

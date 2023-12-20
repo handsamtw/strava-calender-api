@@ -64,14 +64,9 @@ def get_image():
             return Response(image_data, headers={"Content-Type": "image/png"})
 
         else:
-            #         # save token and image to database -> return image
             activity_detail = Activity.parse_activity(recent_activity_id, access_token)
-
-            # print("activity_detail", activity_detail)
             if activity_detail["polyline"]:
-                # this will generate an html
-                image_data = plot(polyline=activity_detail["polyline"])
-
+                image_data = plot(polyline=activity_detail["polyline"], cropped=False)
                 image_id = fs.put(image_data, filename="image.png")
 
             old_image_id = user["image_id"]
