@@ -1,10 +1,8 @@
 from Activity import Activity
-from RoutePlot import RoutePlot
-from ScreenShotter import ScreenShotter
 from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
-from util import expire_in_n_minutes, refresh_access_token
+from util import expire_in_n_minutes, refresh_access_token, plot, take_screenshot
 from chalice import Chalice, Response
 from dotenv import dotenv_values
 
@@ -86,12 +84,11 @@ def get_image():
 
             # print("activity_detail", activity_detail)
             if activity_detail["polyline"]:
-                routePlot = RoutePlot()
                 # this will generate an html
-                routePlot.plot(polyline=activity_detail["polyline"])
-                screenShotter = ScreenShotter()
+                plot(polyline=activity_detail["polyline"])
+
                 # take screenshot of the html with webdriver
-                screenShotter.take_screenshot(
+                take_screenshot(
                     html_file_name="map_with_polyline.html",
                     export_image_name="img/map_with_polyline.png",
                 )
