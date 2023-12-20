@@ -4,9 +4,10 @@ from dotenv import dotenv_values
 from datetime import datetime, timedelta
 from constants import REFRESH_TOKEN_URL
 import folium
-from selenium import webdriver
-import time
-import os
+from PIL import Image
+
+
+import io
 
 
 def human_readable_time(seconds):
@@ -162,7 +163,17 @@ def expire_in_n_minutes(expire_timestamp, minutes=30):
     return time_difference <= timedelta(minutes=minutes)
 
 
-def plot(polyline, saved_file_name="map_with_polyline.html"):
+def image_to_byte_array(image: Image) -> bytes:
+    # BytesIO is a file-like buffer stored in memory
+    imgByteArr = io.BytesIO()
+    # image.save expects a file-like as a argument
+    image.save(imgByteArr, format="PNG")
+    # Turn the BytesIO object back into a bytes object
+    imgByteArr = imgByteArr.getvalue()
+    return imgByteArr
+
+
+def plot(polyline):
     coordinates = decode_polyline(polyline)
     radius = calculate_radius(coordinates)
     zoom_start = get_zoom_start(radius)
@@ -184,54 +195,19 @@ def plot(polyline, saved_file_name="map_with_polyline.html"):
         line_cap="round",
     ).add_to(m)
 
-    # Save the map as an HTML file
-    m.save(saved_file_name)
+    img_data = m._to_png(0.3)
+    img = Image.open(io.BytesIO(img_data))
+    width, height = img.size
+    # Calculate the top-left corner to extract the center
+    size = min(width, height) * 0.9
 
+    # Calculate the coordinates to crop the square
+    left = (width - size) / 2
+    top = (height - size) / 2
+    right = (width + size) / 2
+    bottom = (height + size) / 2
 
-def take_screenshot(html_file_name, export_image_name):
-    html_path = f"file://{os.path.join(os.getcwd(), html_file_name)}"
-    # export_path = os.path.join(os.getcwd(), export_image_name)
-    export_path = export_image_name
-    # Path to your ChromeDriver executable (download and specify the correct path)
-
-    # Configure Chrome options
-    chrome_options = webdriver.ChromeOptions()
-    chrome_options.add_argument(
-        "--headless"
-    )  # Run Chrome in headless mode (without opening a window)
-
-    chrome_options.add_argument(
-        "--disable-gpu"
-    )  # Disable GPU acceleration, which is recommended in headless mode
-
-    # Initialize Chrome driver
-    driver = webdriver.Chrome(options=chrome_options)
-
-    driver.get(html_path)
-    time.sleep(0.25)
-    # the current window size
-    window_size = driver.get_window_size()
-    resize_ratio = 0.9
-
-    # Calculate the dimensions for an 80% square from the center
-    min_side = int(
-        min(window_size["width"], window_size["height"]) * resize_ratio
-    )  # 80% of the minimum side length
-    x = int(
-        (window_size["width"] - min_side) / 2
-    )  # X coordinate for the left edge of the square
-    y = int(
-        (window_size["height"] - min_side) / 2
-    )  # Y coordinate for the top edge of the square
-
-    # Set the window size to capture the desired square area
-    driver.set_window_size(min_side, min_side)
-
-    # Scroll to the calculated coordinates (optional)
-    driver.execute_script(f"window.scrollTo({x}, {y});")
-
-    # Take a screenshot of the loaded HTML file
-    driver.save_screenshot(export_path)
-
-    # Close the browser
-    driver.quit()
+    # Cropped image of above dimension
+    # (It will not change original image)
+    cropped_image = img.crop((left, top, right, bottom))
+    return image_to_byte_array(cropped_image)

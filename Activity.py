@@ -1,4 +1,3 @@
-import bisect
 import requests
 from util import calculate_pace
 from constants import ACTIVITIES_URL
