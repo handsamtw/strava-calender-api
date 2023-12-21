@@ -2,6 +2,4 @@ __pycache__
 .env
 .DS_STORE
 *.html
-.chalice/deployments/
-.chalice/venv/
 .chalice/
