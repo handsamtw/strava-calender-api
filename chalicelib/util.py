@@ -1,12 +1,12 @@
 import requests
 from math import log2, floor
-from dotenv import dotenv_values
 from datetime import datetime, timedelta
-from constants import REFRESH_TOKEN_URL
+import os
 import folium
 from PIL import Image
 from geopy.distance import great_circle
 import io
+from chalicelib import ACTIVITIES_URL, REFRESH_TOKEN_URL
 
 
 def human_readable_time(seconds):
@@ -82,11 +82,10 @@ def decode_polyline(polyline_str):
 
 # if the token hasn't expire, will return the same token
 def refresh_access_token(refresh_token):
-    config = dotenv_values(".env")
     url = REFRESH_TOKEN_URL
     refresh_data = {
-        "client_id": config.get("CLIENT_ID"),
-        "client_secret": config.get("CLIENT_SECRET"),
+        "client_id": os.getenv("CLIENT_ID"),
+        "client_secret": os.getenv("CLIENT_SECRET"),
         "grant_type": "refresh_token",
         "refresh_token": refresh_token,
     }
@@ -181,3 +180,48 @@ def plot(polyline, cropped=True):
         return image_to_byte_array(cropped_image)
     else:
         return img_data
+
+
+def get_most_recent_activity_id(access_token):
+    url = f"{ACTIVITIES_URL}?per_page=1&page=1"
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+        if isinstance(data, list) and len(data) > 0 and "id" in data[0]:
+            return data[0]["id"]
+
+        else:
+            print(f"Check response type")
+            return None
+    else:
+        print(f"Failed to retrieve data. Status code: {response.status_code}")
+        return None
+
+
+def parse_activity(id, access_token):
+    headers = {"Authorization": f"Bearer {access_token}"}
+    url = f"{ACTIVITIES_URL}/{id}"
+    response = requests.get(url, headers=headers)
+    data = response.json()
+    pace = calculate_pace(data["distance"], data["moving_time"])
+    city, state = None, None
+
+    if "segment_efforts" in data:
+        first_segment = data["segment_efforts"][0]["segment"]
+        city, state = first_segment["city"], first_segment["state"]
+
+    return {
+        "type": data["type"],
+        "start_date_local": data["start_date_local"],
+        "locations": {"city": city, "state": state},
+        "name": data["name"],
+        "description": data["description"],
+        "distance": data["distance"],
+        "pace": pace,
+        "time": data["moving_time"],
+        "total_elevation_gain": data["total_elevation_gain"],
+        "polyline": data["map"]["polyline"],
+    }

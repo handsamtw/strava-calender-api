@@ -4,3 +4,4 @@ __pycache__
 *.html
 .chalice/deployments/
 .chalice/venv/
+.chalice/
