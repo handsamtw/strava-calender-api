@@ -25,6 +25,7 @@ uri = f"mongodb+srv://samliao:{mongopass}@cluster0.cfszocb.mongodb.net/?retryWri
 client = MongoClient(uri, username="samliao", password=mongopass)
 db = client["strava-github-profile"]
 users_collection = db["users"]
+pins_collection = db["pins"]
 fs = GridFS(db)
 
 # Define CORS configuration
@@ -70,6 +71,30 @@ def get_access_token():
     else:
         print(f"credentials is not an instance of dict.\n Credentials:{credentials}")
         return "Bad request"
+
+
+@app.route(
+    "/pin",
+    methods=["POST"],
+)
+def pin_activities():
+    body = app.current_request.json_body
+    if "uid" in body:
+        uid = body["uid"]
+        print(uid)
+    if "activity_ids" in body and isinstance(body["activity_ids"], list):
+        activity_ids = body["activity_ids"]
+        for activity_id in activity_ids:
+            pass
+
+    return body
+
+
+@app.route("/pin", methods=["GET"])
+def get_pin_activities():
+    params = app.current_request.query_params
+    uid = params["uid"]
+    return uid
 
 
 @app.route("/{uid}", methods=["GET"])
