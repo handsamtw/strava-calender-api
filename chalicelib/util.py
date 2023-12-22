@@ -7,6 +7,8 @@ from PIL import Image
 from geopy.distance import great_circle
 import io
 from chalicelib import ACTIVITIES_URL, REFRESH_TOKEN_URL
+from chalice import Response
+from html2image import Html2Image
 
 
 def human_readable_time(seconds):
@@ -94,7 +96,7 @@ def refresh_access_token(refresh_token):
         return response.json()
 
     else:
-        print(f"Failed to retrieve data. Status code: {response.status_code}")
+        return Response("Failed to retrieve data.", status_code=response.status_code)
 
 
 def expire_in_n_minutes(expire_timestamp, minutes=30):
@@ -225,3 +227,45 @@ def parse_activity(id, access_token):
         "total_elevation_gain": data["total_elevation_gain"],
         "polyline": data["map"]["polyline"],
     }
+
+
+def request_token(code):
+    url = "https://www.strava.com/oauth/token"
+
+    payload = {
+        "client_id": os.getenv("CLIENT_ID"),
+        "client_secret": os.getenv("CLIENT_SECRET"),
+        "code": code,
+        "grant_type": "authorization_code",
+    }
+    files = []
+    headers = {}
+
+    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+    print(response.json())
+    if response.status_code == 200:
+        data = response.json()
+        return {
+            "access_token": data["access_token"],
+            "refresh_token": data["refresh_token"],
+            "expires_at": data["expires_at"],
+        }
+
+    else:
+        return "Error!!!"
+
+
+def html_to_activity_image(activity_id):
+    output_path = "img"
+    hti = Html2Image(output_path=output_path)
+
+    html_content = (
+        "<div class='strava-embed-placeholder' data-embed-type='activity' data-embed-id="
+        + str(activity_id)
+        + " data-style='standard'></div><script src='https://strava-embeds.com/embed.js'></script>"
+    )
+
+    hti.screenshot(html_str=html_content, save_as="my_image.png")
+    with open(f"{output_path}/my_image.png", "rb") as file:
+        image_data = file.read()
+        return image_data
