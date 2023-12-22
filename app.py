@@ -5,9 +5,7 @@ import requests
 from chalicelib.util import (
     expire_in_n_minutes,
     refresh_access_token,
-    plot,
     get_most_recent_activity_id,
-    parse_activity,
     request_token,
     html_to_activity_image,
 )
@@ -54,22 +52,6 @@ def random_image():
     return Response(
         body=image_data, status_code=200, headers={"Content-Type": "image/png"}
     )
-
-    # Convert HTML content to image
-
-    # return Response(
-    #     base64.b64decode(
-    #         "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg=="
-    #     ),
-    #     headers={"Content-Type": "image/jpeg"},
-    #     status_code=200,
-    # )
-    # image_path = (
-    #     "chalicelib/img/route.png"  # Replace with the path to your PNG image file
-    # )
-    image_id = "65830098ee1a52dfe1706b8c"
-    image_data = fs.get(ObjectId(image_id)).read()
-    return Response(image_data, headers={"Content-Type": "image/png"}, status_code=200)
 
 
 # NOTE: The return _id will be stored in localstorage at frontend side
@@ -173,18 +155,3 @@ def get_image(uid):
             #         {"_id": user["_id"]},
             #         {"$set": {"image": image_data}},
             #     )
-        # image_id = fs.put(image_data, filename="image.png")
-
-        # old_image_id = user["image_id"]
-        # fs.delete(ObjectId(old_image_id))
-        # users_collection.update_one(
-        #     {"username": username, "access_token": access_token},
-        #     {
-        #         "$set": {
-        #             "image_id": ObjectId(image_id),
-        #             "recent_activity_id": recent_activity_id,
-        #         }
-        #     },
-        # )
-
-        # return Response(image_data, headers={"Content-Type": "image/png"})
