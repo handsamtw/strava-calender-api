@@ -74,8 +74,9 @@ def get_access_token():
 
 @app.route("/{uid}", methods=["GET"])
 def get_image(uid):
+    if not ObjectId.is_valid(uid):
+        return f"Invalid user id: {uid}"
     user = users_collection.find_one({"_id": ObjectId(uid)})
-
     if not user:
         return Response(
             f"User id {uid} wasn't found in database.Check Strava authorization status",
@@ -89,11 +90,10 @@ def get_image(uid):
         )
 
         if expire_in_n_minutes(expires_at, 30):
-            try:
-                response = refresh_access_token(refresh_token)
-                response.raise_for_status()  # Raises an HTTPError if the response status code is an error
+            response = refresh_access_token(refresh_token)
+            if isinstance(response, dict):
                 users_collection.update_one(
-                    {"_id": id},
+                    {"_id": uid},
                     {
                         "$set": {
                             "access_token": response["access_token"],
@@ -104,18 +104,8 @@ def get_image(uid):
                 )
                 # It is very important to replace old token with new one !!!
                 access_token = response["access_token"]
-            except requests.HTTPError as http_err:
-                # Handling HTTP errors (4xx or 5xx status codes)
-                error_message = f"HTTP error occurred: {http_err}"
-                print(error_message)
-                if response and response.text:
-                    print("Error details:", response.text)
-                return
-
-            except Exception as err:
-                # Handling other exceptions
-                print("Other error occurred:", err)
-                return
+            else:
+                return "Failed to refresh access_token"
 
         # If the user exists and latest avtivity id matches activity id, return image directly
         recent_activity_id = get_most_recent_activity_id(access_token)
@@ -145,13 +135,11 @@ def get_image(uid):
 
             return Response(image_data, headers={"Content-Type": "image/png"})
 
-            # activity_detail = parse_activity(recent_activity_id, access_token)
-            # return activity_detail
-            # if activity_detail["polyline"]:
-            #     image_data = plot(
-            #         polyline=activity_detail["polyline"], cropped=False
-            #     )
-            #     users_collection.update_one(
-            #         {"_id": user["_id"]},
-            #         {"$set": {"image": image_data}},
-            #     )
+    # activity_detail = parse_activity(recent_activity_id, access_token)
+    # return activity_detail
+    # if activity_detail["polyline"]:
+    #     image_data = plot(polyline=activity_detail["polyline"], cropped=False)
+    #     users_collection.update_one(
+    #         {"_id": user["_id"]},
+    #         {"$set": {"image": image_data}},
+    #     )
