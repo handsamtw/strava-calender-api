@@ -8,6 +8,9 @@ from chalicelib.util import (
     get_most_recent_activity_id,
     request_token,
     html_to_activity_image,
+    get_all_activities,
+    summarize_activity,
+    plot_heatmap,
 )
 from chalice import Chalice, Response, CORSConfig
 import os
@@ -95,6 +98,14 @@ def get_pin_activities():
     params = app.current_request.query_params
     uid = params["uid"]
     return uid
+
+
+@app.route("/heatmap", methods=["GET"])
+def get_activity_heatmap():
+    token = "mytoken"
+    activities = get_all_activities(token)
+    daily_summary = summarize_activity(activities)
+    plot_heatmap(daily_summary)
 
 
 @app.route("/{uid}", methods=["GET"])

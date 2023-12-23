@@ -1,9 +1,90 @@
 import requests
 from datetime import datetime, timedelta
 import os
-from chalicelib import ACTIVITIES_URL, REFRESH_TOKEN_URL
+from chalicelib import ACTIVITIES_URL, REFRESH_TOKEN_URL, CMAP
 from chalice import Response
 from html2image import Html2Image
+
+
+import numpy as np
+
+np.random.seed(sum(map(ord, "calmap")))
+import pandas as pd
+import calmap
+import requests
+import matplotlib.pyplot as plt
+
+
+def get_all_activities(token):
+    payload = {}
+    headers = {"Authorization": f"Bearer {token}"}
+    activities = []
+    per_page = 200
+    for page_num in range(1, 11):
+        response = requests.request(
+            "GET",
+            f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}",
+            headers=headers,
+            data=payload,
+        )
+        if response.status_code != 200:
+            print("Bad request!")
+            break
+        else:
+            result = response.json()
+            if isinstance(result, list) and len(result) > 0:
+                activities.extend(result)
+            else:
+                print("We have fetched all the data. Yaho")
+                break
+    return activities
+
+
+def summarize_activity(activities):
+    ACTIVITY_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+
+    # Convert to DataFrame
+    df = pd.DataFrame(activities)
+
+    # Convert 'start_date_local' to datetime and set it as the index
+    df["start_date_local"] = pd.to_datetime(
+        df["start_date_local"], format=ACTIVITY_FORMAT
+    )
+    df.set_index("start_date_local", inplace=True)
+    # Group by date and calculate the sum for each day
+    daily_summary = df.resample("D").agg({"moving_time": "sum", "distance": "sum"})
+
+    for col in daily_summary.columns:
+        max_val = np.mean(daily_summary[col]) + 3 * np.std(daily_summary[col])
+        daily_summary[col].clip(0, max_val, inplace=True)
+
+    return daily_summary
+
+
+def plot_heatmap(daily_summary, out_file, type="time", cmap="Reds"):
+    if type != "time" or type != "distance":
+        print("type must be time or distance")
+        return
+    if cmap not in CMAP:
+        print(
+            f"{cmap} is not one of the color theme. Please use one of the follow {CMAP}"
+        )
+        return
+    plt.figure()
+
+    fig, ax = calmap.calendarplot(
+        daily_summary[type],
+        daylabels="MTWTFSS",
+        cmap=cmap,
+        linewidth=1,
+        linecolor="white",
+        fig_kws=dict(figsize=(8, 4)),
+    )
+
+    # Save plot
+    if not out_file:
+        out_file = "example_calander.png"
+    fig.savefig(out_file, dpi=600)
 
 
 # if the token hasn't expire, will return the same token
