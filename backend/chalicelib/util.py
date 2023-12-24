@@ -4,14 +4,9 @@ import os
 from chalicelib import ACTIVITIES_URL, REFRESH_TOKEN_URL, CMAP
 from chalice import Response
 from html2image import Html2Image
-
-
 import numpy as np
-
-np.random.seed(sum(map(ord, "calmap")))
 import pandas as pd
 import calmap
-import requests
 import matplotlib.pyplot as plt
 
 

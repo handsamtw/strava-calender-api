@@ -14,7 +14,6 @@ from chalicelib.util import (
 )
 from chalice import Chalice, Response, CORSConfig
 import os
-from html2image import Html2Image
 
 app = Chalice(app_name="strava-github-profile")
 # I have to add this line to allow browser seeing the image
@@ -39,25 +38,6 @@ cors_config = CORSConfig(
 )
 
 
-@app.route("/random_image", methods=["GET"])
-def random_image():
-    output_path = "img"
-    hti = Html2Image(output_path=output_path)
-
-    html_content = """
-<div class="strava-embed-placeholder" data-embed-type="activity" data-embed-id="10414933226" data-style="standard"></div>
-<script src="https://strava-embeds.com/embed.js"></script>
-"""
-
-    hti.screenshot(html_str=html_content, save_as="my_image.png")
-    with open(f"{output_path}/my_image.png", "rb") as file:
-        image_data = file.read()
-
-    return Response(
-        body=image_data, status_code=200, headers={"Content-Type": "image/png"}
-    )
-
-
 # NOTE: The return _id will be stored in localstorage at frontend side
 @app.route("/token", methods=["GET"], cors=cors_config)
 def get_access_token():
@@ -74,30 +54,6 @@ def get_access_token():
     else:
         print(f"credentials is not an instance of dict.\n Credentials:{credentials}")
         return "Bad request"
-
-
-@app.route(
-    "/pin",
-    methods=["POST"],
-)
-def pin_activities():
-    body = app.current_request.json_body
-    if "uid" in body:
-        uid = body["uid"]
-        print(uid)
-    if "activity_ids" in body and isinstance(body["activity_ids"], list):
-        activity_ids = body["activity_ids"]
-        for activity_id in activity_ids:
-            pass
-
-    return body
-
-
-@app.route("/pin", methods=["GET"])
-def get_pin_activities():
-    params = app.current_request.query_params
-    uid = params["uid"]
-    return uid
 
 
 @app.route("/heatmap", methods=["GET"])
@@ -171,3 +127,27 @@ def get_image(uid):
             )
 
             return Response(image_data, headers={"Content-Type": "image/png"})
+
+
+# @app.route(
+#     "/pin",
+#     methods=["POST"],
+# )
+# def pin_activities():
+#     body = app.current_request.json_body
+#     if "uid" in body:
+#         uid = body["uid"]
+#         print(uid)
+#     if "activity_ids" in body and isinstance(body["activity_ids"], list):
+#         activity_ids = body["activity_ids"]
+#         for activity_id in activity_ids:
+#             pass
+
+#     return body
+
+
+# @app.route("/pin", methods=["GET"])
+# def get_pin_activities():
+#     params = app.current_request.query_params
+#     uid = params["uid"]
+#     return uid
