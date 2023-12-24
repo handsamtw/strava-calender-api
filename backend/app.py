@@ -1,7 +1,6 @@
 from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
-import requests
 from chalicelib.util import (
     expire_in_n_minutes,
     refresh_access_token,
@@ -56,12 +55,12 @@ def get_access_token():
         return "Bad request"
 
 
-@app.route("/heatmap", methods=["GET"])
-def get_activity_heatmap():
-    token = "mytoken"
-    activities = get_all_activities(token)
-    daily_summary = summarize_activity(activities)
-    plot_heatmap(daily_summary)
+# @app.route("/heatmap", methods=["GET"])
+# def get_activity_heatmap():
+#     token = "mytoken"
+#     activities = get_all_activities(token)
+#     daily_summary = summarize_activity(activities)
+#     plot_heatmap(daily_summary)
 
 
 @app.route("/{uid}", methods=["GET"])
