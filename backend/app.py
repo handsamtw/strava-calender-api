@@ -124,12 +124,11 @@ def get_image(uid):
             user["refresh_token"],
             user["expires_at"],
         )
-
         if expire_in_n_minutes(expires_at, 30):
             response = refresh_access_token(refresh_token)
             if isinstance(response, dict):
                 users_collection.update_one(
-                    {"_id": uid},
+                    {"_id": ObjectId(uid)},
                     {
                         "$set": {
                             "access_token": response["access_token"],
@@ -155,7 +154,9 @@ def get_image(uid):
 
         else:
             image_data = html_to_activity_image(recent_activity_id)
-            image_id = fs.put(image_data, filename="image.png")
+            image_file_name = f"image-{uid}.png"
+            print(image_file_name)
+            image_id = fs.put(image_data, filename=image_file_name)
             if "image_id" in user:
                 old_image_id = user["image_id"]
                 fs.delete(ObjectId(old_image_id))
@@ -170,12 +171,3 @@ def get_image(uid):
             )
 
             return Response(image_data, headers={"Content-Type": "image/png"})
-
-    # activity_detail = parse_activity(recent_activity_id, access_token)
-    # return activity_detail
-    # if activity_detail["polyline"]:
-    #     image_data = plot(polyline=activity_detail["polyline"], cropped=False)
-    #     users_collection.update_one(
-    #         {"_id": user["_id"]},
-    #         {"$set": {"image": image_data}},
-    #     )
