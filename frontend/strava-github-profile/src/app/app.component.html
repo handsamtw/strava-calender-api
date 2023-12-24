@@ -1,8 +1,9 @@
 <h1>Strava-Github-Profile</h1>
-<img class="strava-btn" src="../assets/btn-strava.001.jpeg" />
+<app-strava-connect-button></app-strava-connect-button>
 <app-themes
   [options]="radioOptions"
   (optionSelected)="onOptionSelected($event)"
 ></app-themes>
-<app-submit-button></app-submit-button>
+<app-display-card imageData="{{ imageResult }}"></app-display-card>
+<app-submit-button (submitEvent)="onSubmitEvent($event)"></app-submit-button>
 <router-outlet></router-outlet>
