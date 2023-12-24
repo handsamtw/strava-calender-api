@@ -20,7 +20,9 @@ def get_all_activities(token):
     headers = {"Authorization": f"Bearer {token}"}
     activities = []
     per_page = 200
-    for page_num in range(1, 11):
+    required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
+    for page_num in range(1, 10):
+        print(f"Page: {page_num}")
         response = requests.request(
             "GET",
             f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}",
@@ -33,16 +35,20 @@ def get_all_activities(token):
         else:
             result = response.json()
             if isinstance(result, list) and len(result) > 0:
-                activities.extend(result)
-            else:
+                for activity in result:
+                    selected_data = {col: activity[col] for col in required_columns}
+                    activities.append(selected_data)
+            if len(result) < 200:
                 print("We have fetched all the data. Yaho")
                 break
-    return activities
+            else:
+                print("No valid result")
+                break
 
 
-def summarize_activity(activities):
+def summarize_activity(activities, sport_type=None):
     ACTIVITY_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-
+    valid_sport_type = ["Run", "Ride", "Walk"]
     # Convert to DataFrame
     df = pd.DataFrame(activities)
 
@@ -51,6 +57,10 @@ def summarize_activity(activities):
         df["start_date_local"], format=ACTIVITY_FORMAT
     )
     df.set_index("start_date_local", inplace=True)
+
+    if sport_type is not None and sport_type in valid_sport_type:
+        df = df[df["type"] == sport_type]
+
     # Group by date and calculate the sum for each day
     daily_summary = df.resample("D").agg({"moving_time": "sum", "distance": "sum"})
 
