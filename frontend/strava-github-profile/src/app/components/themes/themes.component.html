@@ -1,0 +1,11 @@
+<div *ngFor="let option of options; let i = index">
+  <label>
+    <input
+      type="radio"
+      [value]="option"
+      [checked]="i === selectedIndex"
+      (change)="selectOption(i)"
+    />
+    {{ option }}
+  </label>
+</div>
