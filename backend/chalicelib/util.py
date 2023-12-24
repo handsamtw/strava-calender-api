@@ -6,8 +6,9 @@ from chalice import Response
 from html2image import Html2Image
 import numpy as np
 import pandas as pd
-import calmap
-import matplotlib.pyplot as plt
+
+# import calmap
+# import matplotlib.pyplot as plt
 
 
 def get_all_activities(token):
@@ -66,30 +67,30 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary
 
 
-def plot_heatmap(daily_summary, out_file, type="time", cmap="Reds"):
-    if type != "time" or type != "distance":
-        print("type must be time or distance")
-        return
-    if cmap not in CMAP:
-        print(
-            f"{cmap} is not one of the color theme. Please use one of the follow {CMAP}"
-        )
-        return
-    plt.figure()
+# def plot_heatmap(daily_summary, out_file, type="time", cmap="Reds"):
+#     if type != "time" or type != "distance":
+#         print("type must be time or distance")
+#         return
+#     if cmap not in CMAP:
+#         print(
+#             f"{cmap} is not one of the color theme. Please use one of the follow {CMAP}"
+#         )
+#         return
+#     plt.figure()
 
-    fig, ax = calmap.calendarplot(
-        daily_summary[type],
-        daylabels="MTWTFSS",
-        cmap=cmap,
-        linewidth=1,
-        linecolor="white",
-        fig_kws=dict(figsize=(8, 4)),
-    )
+#     fig, ax = calmap.calendarplot(
+#         daily_summary[type],
+#         daylabels="MTWTFSS",
+#         cmap=cmap,
+#         linewidth=1,
+#         linecolor="white",
+#         fig_kws=dict(figsize=(8, 4)),
+#     )
 
-    # Save plot
-    if not out_file:
-        out_file = "example_calander.png"
-    fig.savefig(out_file, dpi=600)
+#     # Save plot
+#     if not out_file:
+#         out_file = "example_calander.png"
+#     fig.savefig(out_file, dpi=600)
 
 
 # if the token hasn't expire, will return the same token

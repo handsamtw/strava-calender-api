@@ -9,7 +9,7 @@ from chalicelib.util import (
     html_to_activity_image,
     get_all_activities,
     summarize_activity,
-    plot_heatmap,
+    # plot_heatmap,
 )
 from chalice import Chalice, Response, CORSConfig
 import os
