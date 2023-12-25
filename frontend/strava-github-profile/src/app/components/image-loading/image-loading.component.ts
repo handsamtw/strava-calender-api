@@ -1,16 +1,21 @@
 import { Component, OnInit } from '@angular/core';
-
+import { Observable } from 'rxjs';
+import { FetchImageService } from 'src/app/fetch-image.service';
 @Component({
   selector: 'app-image-loading',
   templateUrl: './image-loading.component.html',
   styleUrls: ['./image-loading.component.css'],
 })
 export class ImageLoadingComponent implements OnInit {
-  async ngOnInit(): Promise<void> {
-    console.log('fetch image from backend');
-    // mock getting result from backend
-    await new Promise((f) => setTimeout(f, 1000));
+  imageUrl = '';
+  constructor(private fetchImageService: FetchImageService) {}
 
-    window.location.href = 'http://localhost:4200';
+  ngOnInit() {
+    // mock getting result from backend
+    this.fetchImageService.fetchImage().subscribe((imageBlob) => {
+      this.imageUrl = URL.createObjectURL(imageBlob);
+    });
+
+    // window.location.href = 'http://localhost:4200';
   }
 }

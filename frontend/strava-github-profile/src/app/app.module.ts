@@ -9,7 +9,7 @@ import { SubmitButtonComponent } from './components/submit-button/submit-button.
 import { DisplayCardComponent } from './components/display-card/display-card.component';
 import { StravaConnectButtonComponent } from './components/strava-connect-button/strava-connect-button.component';
 import { ImageLoadingComponent } from './components/image-loading/image-loading.component';
-
+import { HttpClientModule } from '@angular/common/http';
 @NgModule({
   declarations: [
     AppComponent,
@@ -20,8 +20,8 @@ import { ImageLoadingComponent } from './components/image-loading/image-loading.
     StravaConnectButtonComponent,
     ImageLoadingComponent,
   ],
-  imports: [BrowserModule, AppRoutingModule],
-  providers: [],
+  imports: [BrowserModule, AppRoutingModule, HttpClientModule],
+  providers: [ImageLoadingComponent],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

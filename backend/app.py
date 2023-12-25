@@ -63,7 +63,7 @@ def get_access_token():
 #     plot_heatmap(daily_summary)
 
 
-@app.route("/{uid}", methods=["GET"])
+@app.route("/{uid}", methods=["GET"], cors=cors_config)
 def get_image(uid):
     if not ObjectId.is_valid(uid):
         return f"Invalid user id: {uid}"
