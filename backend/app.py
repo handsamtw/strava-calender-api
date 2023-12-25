@@ -13,6 +13,7 @@ from chalicelib.util import (
 )
 from chalice import Chalice, Response, CORSConfig
 import os
+from chalicelib import FRONTEND_DEV_URL, FRONTEND_PROD_URL
 
 app = Chalice(app_name="strava-github-profile")
 # I have to add this line to allow browser seeing the image
@@ -31,7 +32,7 @@ fs = GridFS(db)
 
 # Define CORS configuration
 cors_config = CORSConfig(
-    allow_origin="*",  # Change to specific origin(s) if needed
+    allow_origin=FRONTEND_DEV_URL,
     allow_headers=["Authorization", "Content-Type"],
     max_age=600,  # Max cache time for preflight requests (in seconds)
 )
@@ -65,6 +66,7 @@ def get_access_token():
 
 @app.route("/{uid}", methods=["GET"], cors=cors_config)
 def get_image(uid):
+    print(f"{FRONTEND_DEV_URL}, {FRONTEND_PROD_URL}")
     if not ObjectId.is_valid(uid):
         return f"Invalid user id: {uid}"
     user = users_collection.find_one({"_id": ObjectId(uid)})

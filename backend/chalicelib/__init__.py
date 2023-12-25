@@ -12,3 +12,5 @@ CMAP = {
     "RdPu": "RdPu",
     "twilight": "twilight",
 }
+FRONTEND_DEV_URL = "https://localhost:4200"
+FRONTEND_PROD_URL = "https://strava-github-profile.vercel.app"
