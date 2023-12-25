@@ -6,7 +6,7 @@ from chalice import Response
 from html2image import Html2Image
 import numpy as np
 import pandas as pd
-
+import io
 import calmap
 import matplotlib
 
@@ -92,19 +92,26 @@ def plot_heatmap(
 
     fig, ax = calmap.calendarplot(
         daily_summary[type],
-        daylabels="MTWTFSS",
+        # daylabels="MTWTFSS",
+        daylabels=["M", "TU", "W", "TH", "F", "SA", "SU"],
         cmap=cmap,
         linewidth=1,
         linecolor="white",
-        fig_kws=dict(figsize=(8, 4)),
+        fig_kws=dict(figsize=(8, 5)),
     )
+
+    with io.BytesIO() as buffer:  # use buffer memory
+        plt.savefig(buffer, format="png")
+        buffer.seek(0)
+        image_data = buffer.getvalue()
+        return image_data
 
     # Save plot
 
-    fig.savefig(out_file, dpi=600)
-    with open(out_file, "rb") as file:
-        image_data = file.read()
-        return image_data
+    # fig.savefig(out_file, dpi=600)
+    # with open(out_file, "rb") as file:
+    #     image_data = file.read()
+    #     return image_data
 
 
 # if the token hasn't expire, will return the same token
