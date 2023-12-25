@@ -69,15 +69,33 @@ def get_access_token():
 #     # print(daily_summary)
 
 
-@app.route("/heatmap", methods=["GET"])
-def get_activity_heatmap():
+@app.route("/{uid}/heatmap", methods=["GET"])
+def get_activity_heatmap(uid):
+    user = users_collection.find_one({"_id": ObjectId(uid)})
+    if "heatmap_image_id" in user:
+        heatmap_image_id = user["heatmap_image_id"]
+        image_data = fs.get(heatmap_image_id).read()
+        return Response(image_data, headers={"Content-Type": "image/png"})
+
     token = STRAVA_ACCESS_TOKEN
     activities = get_all_activities(token)
     print("Total activity: ", len(activities))
     if len(activities) > 0:
         daily_summary = summarize_activity(activities)
         print(daily_summary.head())
-        plot_heatmap(daily_summary)
+        image_data = plot_heatmap(daily_summary)
+        heatmap_image_id = fs.put(image_data, filename="my-heatmap.png")
+        users_collection.update_one(
+            {"_id": ObjectId(uid)},
+            {
+                "$set": {
+                    "heatmap_image_id": heatmap_image_id,
+                }
+            },
+        )
+
+        return Response(image_data, headers={"Content-Type": "image/png"})
+
         # print(daily_summary)
     else:
         print("activities is empty")
