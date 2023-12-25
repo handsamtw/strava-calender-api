@@ -9,11 +9,11 @@ from chalicelib.util import (
     html_to_activity_image,
     get_all_activities,
     summarize_activity,
-    # plot_heatmap,
+    plot_heatmap,
 )
 from chalice import Chalice, Response, CORSConfig
 import os
-from chalicelib import FRONTEND_DEV_URL, FRONTEND_PROD_URL
+from chalicelib import STRAVA_ACCESS_TOKEN, FRONTEND_DEV_URL, FRONTEND_PROD_URL
 
 app = Chalice(app_name="strava-github-profile")
 # I have to add this line to allow browser seeing the image
@@ -56,17 +56,35 @@ def get_access_token():
         return "Bad request"
 
 
-# @app.route("/heatmap", methods=["GET"])
+# @app.route("/summary", methods=["GET"])
 # def get_activity_heatmap():
-#     token = "mytoken"
+#     token = "1157b65c23cdb3cd8f2b1a05852e413a96cfd1d4"
 #     activities = get_all_activities(token)
-#     daily_summary = summarize_activity(activities)
-#     plot_heatmap(daily_summary)
+#     print("Total activity: ", len(activities))
+#     if len(activities) > 0:
+#         daily_summary = summarize_activity(activities)
+#         print(daily_summary)
+#     else:
+#         print("activities is empty")
+#     # print(daily_summary)
+
+
+@app.route("/heatmap", methods=["GET"])
+def get_activity_heatmap():
+    token = STRAVA_ACCESS_TOKEN
+    activities = get_all_activities(token)
+    print("Total activity: ", len(activities))
+    if len(activities) > 0:
+        daily_summary = summarize_activity(activities)
+        print(daily_summary.head())
+        plot_heatmap(daily_summary)
+        # print(daily_summary)
+    else:
+        print("activities is empty")
 
 
 @app.route("/{uid}", methods=["GET"], cors=cors_config)
 def get_image(uid):
-    print(f"{FRONTEND_DEV_URL}, {FRONTEND_PROD_URL}")
     if not ObjectId.is_valid(uid):
         return f"Invalid user id: {uid}"
     user = users_collection.find_one({"_id": ObjectId(uid)})

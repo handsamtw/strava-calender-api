@@ -14,3 +14,4 @@ CMAP = {
 }
 FRONTEND_DEV_URL = "https://localhost:4200"
 FRONTEND_PROD_URL = "https://strava-github-profile.vercel.app"
+STRAVA_ACCESS_TOKEN = "1157b65c23cdb3cd8f2b1a05852e413a96cfd1d4"
