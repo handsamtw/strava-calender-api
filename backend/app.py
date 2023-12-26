@@ -69,6 +69,16 @@ def get_access_token():
 #     # print(daily_summary)
 
 
+@app.route("/test_pandas", methods=["GET"])
+def test_pandas():
+    token = "ccce120378956a6f1b10904ad1492a61d908af18"
+    activities = get_all_activities(token)
+    if len(activities) > 0:
+        daily_summary = summarize_activity(activities)
+        print(daily_summary.head())
+    return activities[:5]
+
+
 @app.route("/{uid}/heatmap", methods=["GET"])
 def get_activity_heatmap(uid):
     user = users_collection.find_one({"_id": ObjectId(uid)})
@@ -84,15 +94,15 @@ def get_activity_heatmap(uid):
         daily_summary = summarize_activity(activities)
         print(daily_summary.head())
         image_data = plot_heatmap(daily_summary)
-        heatmap_image_id = fs.put(image_data, filename="my-heatmap.png")
-        users_collection.update_one(
-            {"_id": ObjectId(uid)},
-            {
-                "$set": {
-                    "heatmap_image_id": heatmap_image_id,
-                }
-            },
-        )
+        # heatmap_image_id = fs.put(image_data, filename="my-heatmap.png")
+        # users_collection.update_one(
+        #     {"_id": ObjectId(uid)},
+        #     {
+        #         "$set": {
+        #             "heatmap_image_id": heatmap_image_id,
+        #         }
+        #     },
+        # )
 
         return Response(image_data, headers={"Content-Type": "image/png"})
 

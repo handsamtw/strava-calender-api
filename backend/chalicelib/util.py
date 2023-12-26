@@ -7,12 +7,14 @@ from html2image import Html2Image
 import numpy as np
 import pandas as pd
 import io
-import calmap
-import matplotlib
 
-import matplotlib.pyplot as plt
+# import calmap
 
-matplotlib.use("agg")
+# import matplotlib
+
+# import matplotlib.pyplot as plt
+
+# matplotlib.use("agg")
 
 
 def get_all_activities(token):
@@ -30,7 +32,7 @@ def get_all_activities(token):
             data=payload,
         )
         if response.status_code != 200:
-            print("Bad request!")
+            print(response.status_code, response.content)
             break
         else:
             result = response.json()
@@ -88,7 +90,7 @@ def plot_heatmap(
             f"{cmap} is not one of the color theme. Please use one of the follow {CMAP}"
         )
         return
-    plt.figure()
+    # plt.figure()
 
     fig, ax = calmap.calendarplot(
         daily_summary[type],
@@ -101,7 +103,8 @@ def plot_heatmap(
     )
 
     with io.BytesIO() as buffer:  # use buffer memory
-        plt.savefig(buffer, format="png")
+        # plt.savefig(buffer, format="png")
+        fig.savefig(buffer, format="png")
         buffer.seek(0)
         image_data = buffer.getvalue()
         return image_data
