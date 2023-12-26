@@ -2,7 +2,9 @@ from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
 from flask import Flask
-from util import get_all_activities, summarize_activity
+
+# from api._utils.common import get_all_activities, summarize_activity
+from _utils.common import get_all_activities, summarize_activity
 
 # from chalicelib.util import (
 #     expire_in_n_minutes,
@@ -18,10 +20,9 @@ import os
 from dotenv import dotenv_values
 
 # Load variables from .env file
-config = dotenv_values("../.env")
+config = dotenv_values(".env")
 # Access individual variables
 mongopass = config.get("MONGODB_PASSWORD")
-
 # # # Connect to MongoDB
 # mongopass = os.getenv("MONGOPASS")
 uri = f"mongodb+srv://samliao:{mongopass}@cluster0.cfszocb.mongodb.net/?retryWrites=true&w=majority"
