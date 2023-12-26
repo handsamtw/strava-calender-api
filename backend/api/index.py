@@ -18,6 +18,7 @@ from utils import get_all_activities, summarize_activity
 # )
 import os
 from dotenv import dotenv_values
+import calmap
 
 # Load variables from .env file
 config = dotenv_values(".env")
