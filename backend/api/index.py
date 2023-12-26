@@ -1,10 +1,11 @@
 from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
-from flask import Flask
+from flask import Flask, send_file
+import io
 
 # from api._utils.common import get_all_activities, summarize_activity
-from utils import get_all_activities, summarize_activity
+from utils import get_all_activities, summarize_activity, plot_heatmap
 
 
 # from chalicelib.util import (
@@ -18,11 +19,8 @@ from utils import get_all_activities, summarize_activity
 #     plot_heatmap,
 # )
 import os
-from dotenv import dotenv_values
 import calmap
 
-# print("MONGODB_PASSWORD", os.environ.get("MONGODB_PASSWORD"))
-# Load variables from .env file
 config = os.environ
 # Access individual variables
 mongopass = config.get("MONGODB_PASSWORD")
@@ -65,17 +63,38 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def get_activity_heatmap():
-    print("config: ", config)
     token = config.get("ACCESS_TOKEN")
     activities = get_all_activities(token)
     print("Total activity: ", len(activities))
     if len(activities) > 0:
         daily_summary = summarize_activity(activities)
-        print(daily_summary)
-        return activities[:5]
-    else:
-        print("activities is empty")
-    return "activities is empty"
+        # user = users_collection.find_one({"_id": ObjectId(uid)})
+        # if "heatmap_image_id" in user:
+        #     heatmap_image_id = user["heatmap_image_id"]
+        #     image_data = fs.get(heatmap_image_id).read()
+        #     return send_file(io.BytesIO(image_data), mimetype='image/png')
+
+        image_data = plot_heatmap(daily_summary)
+        return send_file(io.BytesIO(image_data), mimetype="image/png")
+        # heatmap_image_id = fs.put(image_data, filename="my-heatmap.png")
+        # users_collection.update_one(
+        #     {"_id": ObjectId(uid)},
+        #     {
+        #         "$set": {
+        #             "heatmap_image_id": heatmap_image_id,
+        #         }
+        #     },
+        # )
+
+    #     return Response(image_data, headers={"Content-Type": "image/png"})
+
+    #     # print(daily_summary)
+    # else:
+    #     print("activities is empty")
+
+    # else:
+    #     print("activities is empty")
+    # return "activities is empty"
     # print(daily_summary)
 
 

@@ -76,35 +76,35 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary
 
 
-# def plot_heatmap(
-#     daily_summary, out_file="example_calander.png", type="time", cmap="Reds"
-# ):
-#     if type not in ["time", "distance"]:
-#         print("type must be time or distance")
-#         return
-#     if cmap not in CMAP:
-#         print(
-#             f"{cmap} is not one of the color theme. Please use one of the follow {CMAP}"
-#         )
-#         return
-#     # plt.figure()
+def plot_heatmap(
+    daily_summary, out_file="example_calander.png", type="time", cmap="Reds"
+):
+    # if type not in ["time", "distance"]:
+    #     print("type must be time or distance")
+    #     return
+    # if cmap not in CMAP:
+    #     print(
+    #         f"{cmap} is not one of the color theme. Please use one of the follow {CMAP}"
+    #     )
+    #     return
 
-#     fig, ax = calendarplot(
-#         daily_summary[type],
-#         # daylabels="MTWTFSS",
-#         daylabels=["M", "TU", "W", "TH", "F", "SA", "SU"],
-#         cmap=cmap,
-#         linewidth=1,
-#         linecolor="white",
-#         fig_kws=dict(figsize=(8, 5)),
-#     )
+    fig, ax = calmap.calendarplot(
+        daily_summary[type],
+        # daylabels="MTWTFSS",
+        daylabels=["M", "TU", "W", "TH", "F", "SA", "SU"],
+        cmap=cmap,
+        linewidth=1,
+        linecolor="white",
+        fig_kws=dict(figsize=(8, 5)),
+    )
 
-#     with io.BytesIO() as buffer:  # use buffer memory
-#         # plt.savefig(buffer, format="png")
-#         fig.savefig(buffer, format="png")
-#         buffer.seek(0)
-#         image_data = buffer.getvalue()
-#         return image_data
+    with io.BytesIO() as buffer:  # use buffer memory
+        # plt.savefig(buffer, format="png")
+        fig.savefig(buffer, format="png")
+        buffer.seek(0)
+        image_data = buffer.getvalue()
+        return image_data
+
 
 #     # Save plot
 
