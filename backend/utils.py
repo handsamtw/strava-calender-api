@@ -1,15 +1,11 @@
 import requests
-from datetime import datetime, timedelta
-import os
-from html2image import Html2Image
 import numpy as np
 import pandas as pd
 import io
-
 import calmap
-import matplotlib
 
-import matplotlib.pyplot as plt
+# from datetime import datetime, timedelta
+import matplotlib
 
 matplotlib.use("agg")
 
