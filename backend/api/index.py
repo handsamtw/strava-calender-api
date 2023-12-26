@@ -4,7 +4,7 @@ from bson import ObjectId
 from flask import Flask
 
 # from api._utils.common import get_all_activities, summarize_activity
-from _utils.common import get_all_activities, summarize_activity
+from utils import get_all_activities, summarize_activity
 
 # from chalicelib.util import (
 #     expire_in_n_minutes,
