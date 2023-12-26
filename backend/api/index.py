@@ -6,6 +6,7 @@ from flask import Flask
 # from api._utils.common import get_all_activities, summarize_activity
 from utils import get_all_activities, summarize_activity
 
+
 # from chalicelib.util import (
 #     expire_in_n_minutes,
 #     refresh_access_token,
@@ -20,10 +21,12 @@ import os
 from dotenv import dotenv_values
 import calmap
 
+# print("MONGODB_PASSWORD", os.environ.get("MONGODB_PASSWORD"))
 # Load variables from .env file
-config = dotenv_values(".env")
+config = os.environ
 # Access individual variables
 mongopass = config.get("MONGODB_PASSWORD")
+
 # # # Connect to MongoDB
 # mongopass = os.getenv("MONGOPASS")
 uri = f"mongodb+srv://samliao:{mongopass}@cluster0.cfszocb.mongodb.net/?retryWrites=true&w=majority"
@@ -62,6 +65,7 @@ app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def get_activity_heatmap():
+    print("config: ", config)
     token = config.get("ACCESS_TOKEN")
     activities = get_all_activities(token)
     print("Total activity: ", len(activities))
