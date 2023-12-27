@@ -31,16 +31,14 @@ def get_access_token():
     code = request.args.get("code")
 
     if not code:
-        print("No code is found in redirect url. Access_token request denied")
-        return "No code is found in redirect url"
+        return "No code is found in redirect url. Access_token request denied"
     credentials = request_token(code)
 
     if isinstance(credentials, dict):
         result = users_collection.insert_one(credentials)
         return str(result.inserted_id)
     else:
-        print(f"credentials is not an instance of dict.\n Credentials:{credentials}")
-        return "Bad request"
+        return f"credentials is not an instance of dict.\n Credentials:{credentials}"
 
 
 @app.route("/", methods=["GET"])

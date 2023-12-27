@@ -73,9 +73,7 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary
 
 
-def plot_heatmap(
-    daily_summary, out_file="example_calander.png", type="time", cmap="Reds"
-):
+def plot_heatmap(daily_summary, type="time", cmap="Reds"):
     # if type not in ["time", "distance"]:
     #     print("type must be time or distance")
     #     return
@@ -96,19 +94,10 @@ def plot_heatmap(
     )
 
     with io.BytesIO() as buffer:  # use buffer memory
-        # plt.savefig(buffer, format="png")
         fig.savefig(buffer, format="png")
         buffer.seek(0)
         image_data = buffer.getvalue()
         return image_data
-
-
-#     # Save plot
-
-#     # fig.savefig(out_file, dpi=600)
-#     # with open(out_file, "rb") as file:
-#     #     image_data = file.read()
-#     #     return image_data
 
 
 # # if the token hasn't expire, will return the same token
