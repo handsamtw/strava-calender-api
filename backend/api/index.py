@@ -1,25 +1,14 @@
 from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
-from flask import Flask, send_file
+from flask import Flask, send_file, request
 import io
 
 # from api._utils.common import get_all_activities, summarize_activity
-from utils import get_all_activities, summarize_activity, plot_heatmap
+from utils import get_all_activities, summarize_activity, plot_heatmap, request_token
 
-
-# from chalicelib.util import (
-#     expire_in_n_minutes,
-#     refresh_access_token,
-#     get_most_recent_activity_id,
-#     request_token,
-#     html_to_activity_image,
-#     get_all_activities,
-#     summarize_activity,
-#     plot_heatmap,
-# )
 import os
-import calmap
+
 
 config = os.environ
 # Access individual variables
@@ -33,32 +22,25 @@ db = client["strava-github-profile"]
 users_collection = db["users"]
 pins_collection = db["pins"]
 fs = GridFS(db)
-
-# Define CORS configuration
-# cors_config = CORSConfig(
-#     allow_origin=FRONTEND_DEV_URL,
-#     allow_headers=["Authorization", "Content-Type"],
-#     max_age=600,  # Max cache time for preflight requests (in seconds)
-# )
 app = Flask(__name__)
 
 
-# # NOTE: The return _id will be stored in localstorage at frontend side
-# @app.route("/token", methods=["GET"], cors=cors_config)
-# def get_access_token():
-#     params = app.current_request.query_params
-#     code = params["code"]
-#     if not code:
-#         print("No code is found in redirect url. Access_token request denied")
-#         return "No code is found in redirect url"
-#     credentials = request_token(code)
+# NOTE: The return _id will be stored in localstorage at frontend side
+@app.route("/token", methods=["GET"])
+def get_access_token():
+    code = request.args.get("code")
 
-#     if isinstance(credentials, dict):
-#         result = users_collection.insert_one(credentials)
-#         return str(result.inserted_id)
-#     else:
-#         print(f"credentials is not an instance of dict.\n Credentials:{credentials}")
-#         return "Bad request"
+    if not code:
+        print("No code is found in redirect url. Access_token request denied")
+        return "No code is found in redirect url"
+    credentials = request_token(code)
+
+    if isinstance(credentials, dict):
+        result = users_collection.insert_one(credentials)
+        return str(result.inserted_id)
+    else:
+        print(f"credentials is not an instance of dict.\n Credentials:{credentials}")
+        return "Bad request"
 
 
 @app.route("/", methods=["GET"])

@@ -166,26 +166,29 @@ def request_token(code):
     url = config.get("REQUEST_TOKEN_URL")
     client_id = config.get("CLIENT_ID")
     client_secret = config.get("CLIENT_SECRET")
+    # url = "https://www.strava.com/oauth/token"
 
-    payload = {
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "code": code,
-        "grant_type": "authorization_code",
-    }
+    # payload = {
+    #     "client_id": os("CLIENT_ID"),
+    #     "client_secret": os.getenv("CLIENT_SECRET"),
+    #     "code": code,
+    #     "grant_type": "authorization_code",
+    # }
+    # files = []
+    # headers = {}
 
-    response = requests.request("POST", url, data=payload)
-    print(response.json())
-    if response.status_code == 200:
-        data = response.json()
-        return {
-            "access_token": data["access_token"],
-            "refresh_token": data["refresh_token"],
-            "expires_at": data["expires_at"],
-        }
+    # response = requests.request("POST", url, headers=headers, data=payload, files=files)
+    # print(response.json())
+    # if response.status_code == 200:
+    #     data = response.json()
+    #     return {
+    #         "access_token": data["access_token"],
+    #         "refresh_token": data["refresh_token"],
+    #         "expires_at": data["expires_at"],
+    #     }
 
-    else:
-        return "Error!!!"
+    # else:
+    #     return "Error!!!"
 
 
 # def html_to_activity_image(activity_id):
