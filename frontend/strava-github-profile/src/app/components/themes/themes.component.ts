@@ -6,16 +6,27 @@ import { Output, EventEmitter } from '@angular/core';
   styleUrls: ['./themes.component.css'],
 })
 export class ThemesComponent {
-  @Input() options: string[] = [];
   @Output() optionSelected = new EventEmitter<string>();
-  selectedIndex = 0;
-
-  ngOnInit() {
-    this.selectOption(this.selectedIndex); // Initially selecting the first option
+  selectedTheme = 'Oranges';
+  themeOptions = {
+    'Strava Classic': 'Oranges',
+    Calmness: 'BuGn',
+    'Github Classic': 'Greens',
+    Aurora: 'PuBu',
+    Spring: 'RdPu',
+    Twilight: 'twilight',
+  };
+  // Function to convert object into an array of key-value pairs
+  getThemesAsArray() {
+    return Object.entries(this.themeOptions);
   }
 
-  selectOption(index: number) {
-    this.selectedIndex = index;
-    this.optionSelected.emit(this.options[index]);
+  ngOnInit() {
+    this.selectOption('Oranges'); // Initially selecting the first option
+  }
+
+  selectOption(theme: string) {
+    this.selectedTheme = theme;
+    this.optionSelected.emit(theme);
   }
 }

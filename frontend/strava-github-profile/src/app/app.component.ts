@@ -6,12 +6,11 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  radioOptions = ['Option 1', 'Option 2', 'Option 3']; // Your array of options
-  selectedOption: string = '';
+  selectedTheme = '';
   imageResult: string = '';
-  onOptionSelected(option: string) {
-    this.selectedOption = option;
-    console.log('Selected Option:', option);
+  onOptionSelected(selectedTheme: string) {
+    this.selectedTheme = selectedTheme;
+    console.log('Selected Option:', selectedTheme);
   }
 
   onSubmitEvent(result: string) {
