@@ -53,14 +53,17 @@ def get_access_token():
 
 @app.route("/calander", methods=["GET"])
 def get_activity_calander():
-    data = request.get_json()
+    user_id = request.args.get("user_id")
+    access_token = request.args.get("token")
     sport_type = request.args.get("sport_type")
     theme = request.args.get("theme")
     plot_by = request.args.get("plot_by")
 
-    if "token" not in data or "user_id" not in data:
+    if not access_token:
         return "Token must be provided"
-    user_id, access_token = data["user_id"], data["token"]
+    if not user_id:
+        return "User id must be provided"
+
     if not ObjectId.is_valid(user_id):
         return f"Invalid user id: {user_id}"
     user = users_collection.find_one({"_id": ObjectId(user_id)})

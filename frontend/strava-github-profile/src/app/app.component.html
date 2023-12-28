@@ -13,6 +13,9 @@
   <div class="app-canvas">
     <app-canvas [previewTheme]="selectedTheme"></app-canvas>
   </div>
+  <div *ngIf="imageToShow">
+    <img src="imageToShow" alt="calander image" />
+  </div>
 </div>
 
 <!-- <router-outlet></router-outlet> -->

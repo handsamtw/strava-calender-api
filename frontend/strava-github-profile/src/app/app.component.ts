@@ -7,10 +7,7 @@ import { CalanderService } from './services/calander.service';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnInit {
-  constructor(
-    private http: HttpClient,
-    private calanderService: CalanderService
-  ) {}
+  constructor(private calanderService: CalanderService) {}
   ngOnInit(): void {
     this.calanderService.getCalanderImage().subscribe(
       (data) => {
