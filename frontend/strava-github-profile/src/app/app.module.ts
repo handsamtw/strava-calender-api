@@ -1,5 +1,7 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
+import { MatSnackBarModule } from '@angular/material/snack-bar'; // Import the MatSnackBarModule
+import { MatIconModule } from '@angular/material/icon';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
@@ -10,6 +12,10 @@ import { DisplayCardComponent } from './components/display-card/display-card.com
 import { StravaConnectButtonComponent } from './components/strava-connect-button/strava-connect-button.component';
 import { ImageLoadingComponent } from './components/image-loading/image-loading.component';
 import { HttpClientModule } from '@angular/common/http';
+import { FooterComponent } from './components/footer/footer.component';
+import { GithubButtonComponent } from './components/github-button/github-button.component';
+import { CanvasComponent } from './components/canvas/canvas.component';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 @NgModule({
   declarations: [
     AppComponent,
@@ -19,8 +25,18 @@ import { HttpClientModule } from '@angular/common/http';
     DisplayCardComponent,
     StravaConnectButtonComponent,
     ImageLoadingComponent,
+    FooterComponent,
+    GithubButtonComponent,
+    CanvasComponent,
   ],
-  imports: [BrowserModule, AppRoutingModule, HttpClientModule],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    HttpClientModule,
+    BrowserAnimationsModule,
+    MatSnackBarModule,
+    MatIconModule,
+  ],
   providers: [ImageLoadingComponent],
   bootstrap: [AppComponent],
 })

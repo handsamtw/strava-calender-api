@@ -8,19 +8,12 @@
     <app-strava-connect-button></app-strava-connect-button>
 
     <app-themes (optionSelected)="onOptionSelected($event)"></app-themes>
+    <app-footer></app-footer>
   </div>
-  <div class="right">
-    <div>
-      <button>Copy</button>
-      <button>Download</button>
-    </div>
+  <div class="app-canvas">
+    <app-canvas [previewTheme]="selectedTheme"></app-canvas>
   </div>
 </div>
-<!-- <app-strava-connect-button></app-strava-connect-button>
-<app-themes
-  [options]="radioOptions"
-  (optionSelected)="onOptionSelected($event)"
-></app-themes>
-<app-display-card imageData="{{ imageResult }}"></app-display-card>
-<app-submit-button (submitEvent)="onSubmitEvent($event)"></app-submit-button>
-<router-outlet></router-outlet> -->
+
+<!-- <router-outlet></router-outlet> -->
+-->
