@@ -73,7 +73,7 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary
 
 
-def plot_heatmap(daily_summary, plot_by="time", theme="Reds"):
+def plot_calander(daily_summary, plot_by="time", theme="Reds"):
     CMAP = {
         "Reds": "Reds",
         "Oranges": "Oranges",

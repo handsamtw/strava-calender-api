@@ -10,7 +10,6 @@ import { ThemesComponent } from './components/themes/themes.component';
 import { SubmitButtonComponent } from './components/submit-button/submit-button.component';
 import { DisplayCardComponent } from './components/display-card/display-card.component';
 import { StravaConnectButtonComponent } from './components/strava-connect-button/strava-connect-button.component';
-import { ImageLoadingComponent } from './components/image-loading/image-loading.component';
 import { HttpClientModule } from '@angular/common/http';
 import { FooterComponent } from './components/footer/footer.component';
 import { GithubButtonComponent } from './components/github-button/github-button.component';
@@ -24,7 +23,6 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     SubmitButtonComponent,
     DisplayCardComponent,
     StravaConnectButtonComponent,
-    ImageLoadingComponent,
     FooterComponent,
     GithubButtonComponent,
     CanvasComponent,
@@ -37,7 +35,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatSnackBarModule,
     MatIconModule,
   ],
-  providers: [ImageLoadingComponent],
+  providers: [],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

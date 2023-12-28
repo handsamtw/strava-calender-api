@@ -1,0 +1,6 @@
+{
+    "/api": {
+      "target": "https://strava-github-profile-ag3u40ar5-handsamtws-projects.vercel.app/",
+      "secure": false
+    }
+  }

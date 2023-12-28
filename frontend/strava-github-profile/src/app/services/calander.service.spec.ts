@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { FetchImageService } from './fetch-image.service';
+import { CalanderService } from './calander.service';
 
-describe('FetchImageService', () => {
-  let service: FetchImageService;
+describe('CalanderService', () => {
+  let service: CalanderService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(FetchImageService);
+    service = TestBed.inject(CalanderService);
   });
 
   it('should be created', () => {
