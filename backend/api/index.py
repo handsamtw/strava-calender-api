@@ -2,15 +2,14 @@ from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
 from flask import Flask, send_file, request
+from flask_cors import CORS
+
 import io
 import os
 from dotenv import load_dotenv
 
 # Load variables from .env into the environment
 
-
-# from api._utils.common import get_all_activities, summarize_activity
-# from utils import get_all_activities, summarize_activity, plot_heatmap, request_token
 from utils import (
     get_all_activities,
     summarize_activity,
@@ -20,6 +19,9 @@ from utils import (
 
 
 app = Flask(__name__)
+CORS(app)
+app.config["CORS_HEADERS"] = "Content-Type"
+
 load_dotenv()
 config = os.environ
 
