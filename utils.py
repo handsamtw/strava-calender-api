@@ -1,3 +1,4 @@
+from base64 import b64encode
 import requests
 import numpy as np
 import pandas as pd
@@ -73,7 +74,8 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary
 
 
-def plot_calander(daily_summary, plot_by="time", theme="Reds"):
+def plot_calander(daily_summary, plot_by="time", theme="Reds", batch_process=False):
+    batch_process = theme == "All"
     CMAP = {
         "Reds": "Reds",
         "Oranges": "Oranges",
@@ -85,23 +87,33 @@ def plot_calander(daily_summary, plot_by="time", theme="Reds"):
     }
     if plot_by not in ["time", "distance"]:
         plot_by = "time"
+
     if theme not in CMAP:
         theme = "Reds"
 
-    fig, ax = calmap.calendarplot(
-        daily_summary[plot_by],
-        daylabels=["M", "TU", "W", "TH", "F", "SA", "SU"],
-        cmap=theme,
-        linewidth=1,
-        linecolor="white",
-        fig_kws=dict(figsize=(8, 5)),
-    )
+    theme_to_process = list(CMAP.keys()) if batch_process else [theme]
+    encoded_imges = []
 
-    with io.BytesIO() as buffer:  # use buffer memory
-        fig.savefig(buffer, format="png")
-        buffer.seek(0)
-        image_data = buffer.getvalue()
-        return image_data
+    for cur_theme in theme_to_process:
+        fig, ax = calmap.calendarplot(
+            daily_summary[plot_by],
+            daylabels=["M", "TU", "W", "TH", "F", "SA", "SU"],
+            cmap=cur_theme,
+            linewidth=1,
+            linecolor="white",
+            fig_kws=dict(figsize=(8, 5)),
+        )
+
+        with io.BytesIO() as buffer:  # use buffer memory
+            fig.savefig(buffer, format="png")
+            buffer.seek(0)
+            encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
+            # encoded_img = encodebytes(buffer.getvalue()).decode(
+            #     "utf-8"
+            # )  # encode as base64
+            encoded_imges.append(encoded_img)
+    print(len(encoded_imges))
+    return encoded_imges
 
 
 #     # Save plot

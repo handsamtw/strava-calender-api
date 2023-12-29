@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
-from flask import Flask, send_file, request
+from flask import Flask, send_file, request, jsonify
 from flask_cors import CORS
 
 import io
@@ -79,12 +79,13 @@ def get_activity_calander():
         #     image_data = fs.get(heatmap_image_id).read()
         #     return send_file(io.BytesIO(image_data), mimetype='image/png')
 
-        image_data = plot_calander(
+        encodeImages = plot_calander(
             daily_summary,
             theme=theme,
             plot_by=plot_by,
         )
-        return send_file(io.BytesIO(image_data), mimetype="image/png")
+        return jsonify(encodeImages)
+        # return send_file(io.BytesIO(image_data), mimetype="image/png")
 
 
 #         # heatmap_image_id = fs.put(image_data, filename="my-heatmap.png")
