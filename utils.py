@@ -74,10 +74,9 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary
 
 
-def plot_calander(daily_summary, plot_by="time", theme="Reds", batch_process=False):
+def plot_calendar(daily_summary, plot_by="time", theme="Reds", batch_process=False):
     batch_process = theme == "All"
     CMAP = {
-        "Reds": "Reds",
         "Oranges": "Oranges",
         "BuGn": "BuGn",
         "Greens": "Greens",

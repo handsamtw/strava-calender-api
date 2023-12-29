@@ -13,7 +13,7 @@ from dotenv import load_dotenv
 from utils import (
     get_all_activities,
     summarize_activity,
-    plot_calander,
+    plot_calendar,
     request_token,
 )
 
@@ -51,8 +51,8 @@ def get_access_token():
         return f"credentials is not an instance of dict.\n Credentials:{credentials}"
 
 
-@app.route("/calander", methods=["GET"])
-def get_activity_calander():
+@app.route("/calendar", methods=["GET"])
+def get_activity_calendar():
     user_id = request.args.get("user_id")
     access_token = request.args.get("token")
     sport_type = request.args.get("sport_type")
@@ -79,7 +79,7 @@ def get_activity_calander():
         #     image_data = fs.get(heatmap_image_id).read()
         #     return send_file(io.BytesIO(image_data), mimetype='image/png')
 
-        encodeImages = plot_calander(
+        encodeImages = plot_calendar(
             daily_summary,
             theme=theme,
             plot_by=plot_by,
