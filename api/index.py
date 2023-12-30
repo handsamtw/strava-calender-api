@@ -88,17 +88,12 @@ def get_activity_calendar():
     print("Total activity: ", len(activities))
     if len(activities) > 0:
         daily_summary = summarize_activity(activities, sport_type=sport_type)
-        # if "heatmap_image_id" in user:
-        #     heatmap_image_id = user["heatmap_image_id"]
-        #     image_data = fs.get(heatmap_image_id).read()
-        #     return send_file(io.BytesIO(image_data), mimetype='image/png')
 
         encodeImages = plot_calendar(
             daily_summary,
             theme=theme,
             plot_by=plot_by,
         )
-
         users_collection.update_one(
             {"_id": ObjectId(uid)}, {"$set": {f"{sport_type}-imageSrc": encodeImages}}
         )

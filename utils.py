@@ -108,7 +108,7 @@ def plot_calendar(daily_summary, plot_by="time", theme="Reds", batch_process=Fal
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
 
-            encoded_imges.append(encoded_img)
+            encoded_imges.append({"theme": cur_theme, "imageUrl": encoded_img})
     return encoded_imges
 
 
