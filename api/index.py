@@ -36,8 +36,8 @@ fs = GridFS(db)
 
 
 # # NOTE: The return _id will be stored in localstorage at frontend side
-@app.route("/token", methods=["GET"])
-def get_access_token():
+@app.route("/user_id", methods=["GET"])
+def get_user_id():
     code = request.args.get("code")
 
     if not code:
@@ -46,7 +46,7 @@ def get_access_token():
 
     if isinstance(credentials, dict):
         result = users_collection.insert_one(credentials)
-        return str(result.inserted_id)
+        return {"user_id": str(result.inserted_id)}
     else:
         return f"credentials is not an instance of dict.\n Credentials:{credentials}"
 
@@ -54,21 +54,18 @@ def get_access_token():
 @app.route("/calendar", methods=["GET"])
 def get_activity_calendar():
     user_id = request.args.get("user_id")
-    access_token = request.args.get("token")
-    sport_type = request.args.get("sport_type")
-    theme = request.args.get("theme")
-    plot_by = request.args.get("plot_by")
-
-    if not access_token:
-        return "Token must be provided"
     if not user_id:
         return "User id must be provided"
-
     if not ObjectId.is_valid(user_id):
         return f"Invalid user id: {user_id}"
     user = users_collection.find_one({"_id": ObjectId(user_id)})
     if not user:
         return f"User id {user_id} wasn't found in database.Check Strava authorization status"
+
+    access_token = user["access_token"]
+    sport_type = request.args.get("sport_type")
+    theme = request.args.get("theme")
+    plot_by = request.args.get("plot_by")
 
     activities = get_all_activities(access_token)
     print("Total activity: ", len(activities))
