@@ -15,6 +15,7 @@ from utils import (
     summarize_activity,
     plot_calendar,
     request_token,
+    refresh_access_token_if_expired,
 )
 
 
@@ -36,8 +37,8 @@ fs = GridFS(db)
 
 
 # # NOTE: The return _id will be stored in localstorage at frontend side
-@app.route("/user_id", methods=["GET"])
-def get_user_id():
+@app.route("/uid", methods=["GET"])
+def generate_user_id():
     code = request.args.get("code")
 
     if not code:
@@ -46,27 +47,43 @@ def get_user_id():
 
     if isinstance(credentials, dict):
         result = users_collection.insert_one(credentials)
-        return {"user_id": str(result.inserted_id)}
+        return {"uid": str(result.inserted_id)}
     else:
         return f"credentials is not an instance of dict.\n Credentials:{credentials}"
 
 
 @app.route("/calendar", methods=["GET"])
 def get_activity_calendar():
-    user_id = request.args.get("user_id")
-    if not user_id:
+    uid = request.args.get("uid")
+    if not uid:
         return "User id must be provided"
-    if not ObjectId.is_valid(user_id):
-        return f"Invalid user id: {user_id}"
-    user = users_collection.find_one({"_id": ObjectId(user_id)})
+    if not ObjectId.is_valid(uid):
+        return f"Invalid user id: {uid}"
+    user = users_collection.find_one({"_id": ObjectId(uid)})
     if not user:
-        return f"User id {user_id} wasn't found in database.Check Strava authorization status"
-
+        return f"User wasn't found in database.Check Strava authorization status"
     access_token = user["access_token"]
+    refresh_token_response = refresh_access_token_if_expired(user)
+    if refresh_token_response and "access_token" in refresh_token_response:
+        users_collection.update_one(
+            {"_id": ObjectId(uid)},
+            {
+                "$set": {
+                    "access_token": refresh_token_response["access_token"],
+                    "refresh_token": refresh_token_response["refresh_token"],
+                    "expires_at": refresh_token_response["expires_at"],
+                }
+            },
+        )
+        access_token = refresh_token_response["access_token"]
+
     sport_type = request.args.get("sport_type")
     theme = request.args.get("theme")
     plot_by = request.args.get("plot_by")
 
+    if f"{sport_type}-imageSrc" in user:
+        encodeImages = user[f"{sport_type}-imageSrc"]
+        return jsonify(encodeImages)
     activities = get_all_activities(access_token)
     print("Total activity: ", len(activities))
     if len(activities) > 0:
@@ -81,6 +98,11 @@ def get_activity_calendar():
             theme=theme,
             plot_by=plot_by,
         )
+
+        users_collection.update_one(
+            {"_id": ObjectId(uid)}, {"$set": {f"{sport_type}-imageSrc": encodeImages}}
+        )
+
         return jsonify(encodeImages)
         # return send_file(io.BytesIO(image_data), mimetype="image/png")
 

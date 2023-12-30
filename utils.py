@@ -107,11 +107,8 @@ def plot_calendar(daily_summary, plot_by="time", theme="Reds", batch_process=Fal
             fig.savefig(buffer, format="png")
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
-            # encoded_img = encodebytes(buffer.getvalue()).decode(
-            #     "utf-8"
-            # )  # encode as base64
+
             encoded_imges.append(encoded_img)
-    print(len(encoded_imges))
     return encoded_imges
 
 
@@ -124,20 +121,20 @@ def plot_calendar(daily_summary, plot_by="time", theme="Reds", batch_process=Fal
 
 
 # # if the token hasn't expire, will return the same token
-def refresh_access_token(refresh_token):
-    url = REFRESH_TOKEN_URL
-    refresh_data = {
-        "client_id": os.getenv("CLIENT_ID"),
-        "client_secret": os.getenv("CLIENT_SECRET"),
-        "grant_type": "refresh_token",
-        "refresh_token": refresh_token,
-    }
-    response = requests.post(url, data=refresh_data)
-    if response.status_code == 200:
+def refresh_access_token_if_expired(user):
+    if expire_in_n_minutes(user["expires_at"], 30):
+        print("Token expired. Request a new one")
+        url = os.getenv("REFRESH_TOKEN_URL")
+        refresh_data = {
+            "client_id": os.getenv("CLIENT_ID"),
+            "client_secret": os.getenv("CLIENT_SECRET"),
+            "grant_type": "refresh_token",
+            "refresh_token": user["refresh_token"],
+        }
+        response = requests.post(url, data=refresh_data)
         return response.json()
-
     else:
-        return "Failed to refresh data"
+        print("Your token is fine as fxxx")
 
 
 def expire_in_n_minutes(expire_timestamp, minutes=30):
