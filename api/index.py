@@ -1,8 +1,9 @@
 from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
-from flask import Flask, send_file, request, jsonify
+from flask import Flask, request, jsonify
 from flask_cors import CORS
+from datetime import datetime, timedelta
 
 import io
 import os
@@ -77,15 +78,21 @@ def get_activity_calendar():
         )
         access_token = refresh_token_response["access_token"]
 
-    sport_type = request.args.get("sport_type")
-    theme = request.args.get("theme")
-    plot_by = request.args.get("plot_by")
+    sport_type, theme, plot_by = (
+        request.args.get("sport_type"),
+        request.args.get("theme"),
+        request.args.get("plot_by"),
+    )
+
+    current_time = datetime.utcnow()
 
     if f"{sport_type}-imageSrc" in user:
-        encodeImages = user[f"{sport_type}-imageSrc"]
-        return jsonify(encodeImages)
+        if "last_query_time" in user and current_time - user[
+            "last_query_time"
+        ] <= timedelta(hours=12):
+            encodeImages = user[f"{sport_type}-imageSrc"]
+            return jsonify(encodeImages)
     activities = get_all_activities(access_token)
-    print("Total activity: ", len(activities))
     if len(activities) > 0:
         if sport_type:
             daily_summary = summarize_activity(
@@ -98,22 +105,15 @@ def get_activity_calendar():
             plot_by=plot_by,
         )
         users_collection.update_one(
-            {"_id": ObjectId(uid)}, {"$set": {f"{sport_type}-imageSrc": encodeImages}}
+            {"_id": ObjectId(uid)},
+            {
+                "$set": {
+                    f"{sport_type}-imageSrc": encodeImages,
+                    "last_query_time": current_time,
+                }
+            },
         )
-
         return jsonify(encodeImages)
-        # return send_file(io.BytesIO(image_data), mimetype="image/png")
-
-
-#         # heatmap_image_id = fs.put(image_data, filename="my-heatmap.png")
-#         # users_collection.update_one(
-#         #     {"_id": ObjectId(uid)},
-#         #     {
-#         #         "$set": {
-#         #             "heatmap_image_id": heatmap_image_id,
-#         #         }
-#         #     },
-#         # )
 
 
 # # @app.route("/{uid}", methods=["GET"], cors=cors_config)
