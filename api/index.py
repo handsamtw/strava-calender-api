@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 
 import io
 import os
+import matplotlib as mpl
 
-os.environ["MPLCONFIGDIR"] = os.getcwd() + "/configs/"
 
 from dotenv import load_dotenv
 
@@ -20,10 +20,12 @@ from utils import (
     plot_calendar,
     request_token,
     refresh_access_token_if_expired,
+    set_mpl_config_dir,
 )
 
 
 app = Flask(__name__)
+set_mpl_config_dir()
 CORS(app)
 app.config["CORS_HEADERS"] = "Content-Type"
 
@@ -58,8 +60,6 @@ def generate_user_id():
 
 @app.route("/calendar", methods=["GET"])
 def get_activity_calendar():
-    print(os.environ["MPLCONFIGDIR"])
-
     uid = request.args.get("uid")
     if not uid:
         return "User id must be provided"

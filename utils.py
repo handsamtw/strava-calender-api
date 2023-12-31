@@ -6,12 +6,24 @@ import io
 import calmap
 import os
 
-os.environ["MPLCONFIGDIR"] = os.getcwd() + "/configs/"
 
 from datetime import datetime, timedelta
-import matplotlib
+import matplotlib as mpl
 
-matplotlib.use("agg")
+
+def set_mpl_config_dir():
+    mpl_dir = os.path.join(os.getcwd(), "configs")
+    mpl_configdir = os.path.join(
+        mpl_dir, ".matplotlib"
+    )  # Create a subdirectory for Matplotlib's config
+    os.makedirs(mpl_configdir, exist_ok=True)
+    mpl._constrained_layout.USER_CONFIG_DIR = mpl_configdir
+    mpl._get_config_or_cache_dir = (
+        mpl._get_cachedir
+    ) = mpl._get_configdir = lambda: mpl_configdir
+
+
+mpl.use("agg")
 
 
 def get_all_activities(token):
