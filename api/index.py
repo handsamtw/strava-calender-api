@@ -87,7 +87,10 @@ def get_activity_calendar():
     activities = get_all_activities(access_token)
     print("Total activity: ", len(activities))
     if len(activities) > 0:
-        daily_summary = summarize_activity(activities, sport_type=sport_type)
+        if sport_type:
+            daily_summary = summarize_activity(
+                activities, sport_type=sport_type.split(",")
+            )
 
         encodeImages = plot_calendar(
             daily_summary,

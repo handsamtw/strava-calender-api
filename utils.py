@@ -47,7 +47,7 @@ def get_all_activities(token):
 
 def summarize_activity(activities, sport_type=None):
     ACTIVITY_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-    valid_sport_type = ["Run", "Ride", "Swim", "Walk"]
+    available_sport_type = ["Run", "Ride", "Swim", "Walk"]
     # Convert to DataFrame
     df = pd.DataFrame(activities)
 
@@ -57,8 +57,9 @@ def summarize_activity(activities, sport_type=None):
     )
     df.set_index("start_date_local", inplace=True)
 
-    if sport_type and sport_type in valid_sport_type:
-        df = df[df["type"] == sport_type]
+    # if sport_type and sport_type in valid_sport_type:
+    if sport_type and all(sport in available_sport_type for sport in sport_type):
+        df = df[df["type"].isin(sport_type)]
 
     # Group by date and calculate the sum for each day
     daily_summary = df.resample("D").agg({"moving_time": "sum", "distance": "sum"})
@@ -77,9 +78,10 @@ def summarize_activity(activities, sport_type=None):
 def plot_calendar(daily_summary, plot_by="time", theme="Reds", batch_process=False):
     batch_process = theme == "All"
     CMAP = {
-        "Oranges": "Oranges",
+        "Reds": "Reds",
         "BuGn": "BuGn",
         "Greens": "Greens",
+        "Blues": "Blues",
         "PuBu": "PuBu",
         "RdPu": "RdPu",
         "twilight": "twilight",
