@@ -7,6 +7,10 @@ from datetime import datetime, timedelta
 
 import io
 import os
+
+os.environ["MPLCONFIGDIR"] = os.getcwd() + "/configs/"
+print(os.environ["MPLCONFIGDIR"])
+
 from dotenv import load_dotenv
 
 # Load variables from .env into the environment

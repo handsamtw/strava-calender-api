@@ -6,6 +6,8 @@ import io
 import calmap
 import os
 
+# os.environ["MPLCONFIGDIR"] = os.getcwd() + "/configs/"
+
 from datetime import datetime, timedelta
 import matplotlib
 
