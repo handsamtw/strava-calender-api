@@ -9,7 +9,6 @@ import io
 import os
 
 os.environ["MPLCONFIGDIR"] = os.getcwd() + "/configs/"
-print(os.environ["MPLCONFIGDIR"])
 
 from dotenv import load_dotenv
 
@@ -59,6 +58,8 @@ def generate_user_id():
 
 @app.route("/calendar", methods=["GET"])
 def get_activity_calendar():
+    print(os.environ["MPLCONFIGDIR"])
+
     uid = request.args.get("uid")
     if not uid:
         return "User id must be provided"

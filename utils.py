@@ -6,7 +6,7 @@ import io
 import calmap
 import os
 
-# os.environ["MPLCONFIGDIR"] = os.getcwd() + "/configs/"
+os.environ["MPLCONFIGDIR"] = os.getcwd() + "/configs/"
 
 from datetime import datetime, timedelta
 import matplotlib
@@ -127,7 +127,6 @@ def plot_calendar(daily_summary, plot_by="time", theme="Reds", batch_process=Fal
 # # if the token hasn't expire, will return the same token
 def refresh_access_token_if_expired(user):
     if expire_in_n_minutes(user["expires_at"], 30):
-        print("Token expired. Request a new one")
         url = os.getenv("REFRESH_TOKEN_URL")
         refresh_data = {
             "client_id": os.getenv("CLIENT_ID"),
@@ -137,8 +136,6 @@ def refresh_access_token_if_expired(user):
         }
         response = requests.post(url, data=refresh_data)
         return response.json()
-    else:
-        print("Your token is fine as fxxx")
 
 
 def expire_in_n_minutes(expire_timestamp, minutes=30):
@@ -188,7 +185,6 @@ def request_token(code):
     }
 
     response = requests.request("POST", url, data=payload)
-    print(response.json())
     if response.status_code == 200:
         data = response.json()
         return {
