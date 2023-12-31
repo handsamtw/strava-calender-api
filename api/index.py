@@ -4,10 +4,7 @@ from bson import ObjectId
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from datetime import datetime, timedelta
-
-import io
 import os
-import matplotlib as mpl
 
 
 from dotenv import load_dotenv
@@ -20,12 +17,10 @@ from utils import (
     plot_calendar,
     request_token,
     refresh_access_token_if_expired,
-    set_mpl_config_dir,
 )
 
 
 app = Flask(__name__)
-set_mpl_config_dir()
 CORS(app)
 app.config["CORS_HEADERS"] = "Content-Type"
 
