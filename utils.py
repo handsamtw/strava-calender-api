@@ -89,7 +89,7 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary
 
 
-def plot_calendar(daily_summary, plot_by="time", theme="Reds", batch_process=False):
+def plot_calendar(daily_summary, plot_by="distance", theme="Reds", batch_process=False):
     batch_process = theme == "All"
     CMAP = {
         "Reds": "Reds",
@@ -101,7 +101,7 @@ def plot_calendar(daily_summary, plot_by="time", theme="Reds", batch_process=Fal
         "twilight": "twilight",
     }
     if plot_by not in ["time", "distance"]:
-        plot_by = "time"
+        plot_by = "distance"
 
     if theme not in CMAP:
         theme = "Reds"
