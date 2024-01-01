@@ -94,10 +94,9 @@ def get_activity_calendar():
             return jsonify(encodeImages)
     activities = get_all_activities(access_token)
     if len(activities) > 0:
-        if sport_type:
-            daily_summary = summarize_activity(
-                activities, sport_type=sport_type.split(",")
-            )
+        daily_summary = summarize_activity(
+            activities, sport_type=sport_type.split(",") if sport_type else None
+        )
 
         encodeImages = plot_calendar(
             daily_summary,

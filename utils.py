@@ -49,7 +49,19 @@ def get_all_activities(token):
 
 def summarize_activity(activities, sport_type=None):
     ACTIVITY_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-    available_sport_type = ["Run", "Ride", "Swim", "Walk"]
+    available_sport_type = [
+        "Run",
+        "Ride",
+        "Swim",
+        "Walk",
+        "Hike",
+        "Trail Run",
+        "Ski",
+        "Yoga",
+        "Hiit",
+        "Weight Training",
+        "Workout",
+    ]
     # Convert to DataFrame
     df = pd.DataFrame(activities)
 
