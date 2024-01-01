@@ -56,9 +56,9 @@ def summarize_activity(activities, sport_type=None):
         "Walk",
         "Hike",
         "Trail Run",
-        "Ski",
+        "Alpine Ski",
         "Yoga",
-        "Hiit",
+        "HIIT",
         "Weight Training",
         "Workout",
     ]
