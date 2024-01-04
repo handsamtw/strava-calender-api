@@ -50,17 +50,17 @@ def get_all_activities(token):
 def summarize_activity(activities, sport_type=None):
     ACTIVITY_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
     available_sport_type = [
-        "Run",
-        "Ride",
-        "Swim",
-        "Walk",
-        "Hike",
-        "Trail Run",
-        "Alpine Ski",
-        "Yoga",
-        "HIIT",
-        "Weight Training",
-        "Workout",
+        "run",
+        "ride",
+        "swim",
+        "walk",
+        "hike",
+        "trail run",
+        "alpine ski",
+        "yoga",
+        "hiit",
+        "weight training",
+        "workout",
     ]
     # Convert to DataFrame
     df = pd.DataFrame(activities)
@@ -70,9 +70,11 @@ def summarize_activity(activities, sport_type=None):
         df["start_date_local"], format=ACTIVITY_FORMAT
     )
     df.set_index("start_date_local", inplace=True)
-
     # if sport_type and sport_type in valid_sport_type:
-    if sport_type and all(sport in available_sport_type for sport in sport_type):
+
+    if sport_type and all(
+        sport.lower() in available_sport_type for sport in sport_type
+    ):
         df = df[df["type"].isin(sport_type)]
 
     # Group by date and calculate the sum for each day
@@ -80,6 +82,10 @@ def summarize_activity(activities, sport_type=None):
     daily_summary.rename(columns={"moving_time": "time"}, inplace=True)
     # clip all outliers to make visualization more intuitive
     outlier_std = 3
+
+    if daily_summary.empty:
+        return daily_summary
+
     for col in daily_summary.columns:
         max_val = int(
             np.mean(daily_summary[col]) + outlier_std * np.std(daily_summary[col])

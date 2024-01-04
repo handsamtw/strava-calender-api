@@ -92,13 +92,20 @@ def get_activity_calendar():
             "last_query_time"
         ] <= timedelta(hours=12):
             encodeImages = user[f"{sport_type}-imageSrc"]
+            if as_image and as_image.lower() == "true":
+                image_data = b64decode(encodeImages[0]["imageUrl"])
+                response = Response(image_data, mimetype="image/png")
+
+                return response
             return jsonify(encodeImages)
+
     activities = get_all_activities(access_token)
     if len(activities) > 0:
         daily_summary = summarize_activity(
             activities, sport_type=sport_type.split(",") if sport_type else None
         )
-
+        if daily_summary.empty:
+            return "No activities found within the period"
         encodeImages = plot_calendar(
             daily_summary,
             theme=theme,
@@ -124,71 +131,6 @@ def get_activity_calendar():
             return response
 
         return jsonify(encodeImages)
-
-
-# # @app.route("/{uid}", methods=["GET"], cors=cors_config)
-# # def get_image(uid):
-# #     if not ObjectId.is_valid(uid):
-# #         return f"Invalid user id: {uid}"
-# #     user = users_collection.find_one({"_id": ObjectId(uid)})
-# #     if not user:
-# #         return Response(
-# #             f"User id {uid} wasn't found in database.Check Strava authorization status",
-# #             status_code=404,
-# #         )
-# #     else:
-# #         access_token, refresh_token, expires_at = (
-# #             user["access_token"],
-# #             user["refresh_token"],
-# #             user["expires_at"],
-# #         )
-# #         if expire_in_n_minutes(expires_at, 30):
-# #             response = refresh_access_token(refresh_token)
-# #             if isinstance(response, dict):
-# #                 users_collection.update_one(
-# #                     {"_id": ObjectId(uid)},
-# #                     {
-# #                         "$set": {
-# #                             "access_token": response["access_token"],
-# #                             "refresh_token": response["refresh_token"],
-# #                             "expires_at": response["expires_at"],
-# #                         }
-# #                     },
-# #                 )
-# #                 # It is very important to replace old token with new one !!!
-# #                 access_token = response["access_token"]
-# #             else:
-# #                 return "Failed to refresh access_token"
-
-# #         # If the user exists and latest avtivity id matches activity id, return image directly
-# #         recent_activity_id = get_most_recent_activity_id(access_token)
-# #         if (
-# #             "recent_activity_id" in user
-# #             and user["recent_activity_id"] == recent_activity_id
-# #         ):
-# #             image_id = user["image_id"]
-# #             image_data = fs.get(image_id).read()
-# #             return Response(image_data, headers={"Content-Type": "image/png"})
-
-# #         else:
-# #             image_data = html_to_activity_image(recent_activity_id)
-# #             image_file_name = f"image-{uid}.png"
-# #             print(image_file_name)
-# #             image_id = fs.put(image_data, filename=image_file_name)
-# #             if "image_id" in user:
-# #                 old_image_id = user["image_id"]
-# #                 fs.delete(ObjectId(old_image_id))
-# #             users_collection.update_one(
-# #                 {"_id": ObjectId(uid)},
-# #                 {
-# #                     "$set": {
-# #                         "image_id": ObjectId(image_id),
-# #                         "recent_activity_id": recent_activity_id,
-# #                     }
-# #                 },
-# #             )
-
-# #             return Response(image_data, headers={"Content-Type": "image/png"})
 
 
 if __name__ == "__main__":
