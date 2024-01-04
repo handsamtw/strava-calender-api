@@ -1,12 +1,12 @@
 from pymongo import MongoClient
 from gridfs import GridFS
 from bson import ObjectId
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from datetime import datetime, timedelta
 import os
 
-
+from base64 import b64decode
 from dotenv import load_dotenv
 
 # Load variables from .env into the environment
@@ -78,10 +78,11 @@ def get_activity_calendar():
         )
         access_token = refresh_token_response["access_token"]
 
-    sport_type, theme, plot_by = (
+    sport_type, theme, plot_by, as_image = (
         request.args.get("sport_type"),
         request.args.get("theme"),
         request.args.get("plot_by"),
+        request.args.get("as_image"),
     )
 
     current_time = datetime.utcnow()
@@ -112,6 +113,16 @@ def get_activity_calendar():
                 }
             },
         )
+
+        if as_image and as_image.lower() == "true":
+            # Decode the base64 string to bytes
+            image_data = b64decode(encodeImages[0]["imageUrl"])
+
+            # Set the appropriate content type for the response
+            response = Response(image_data, mimetype="image/png")
+
+            return response
+
         return jsonify(encodeImages)
 
 
