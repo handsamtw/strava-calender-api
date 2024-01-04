@@ -108,10 +108,14 @@ def plot_calendar(daily_summary, plot_by="distance", theme="Reds"):
     if plot_by not in ["time", "distance"]:
         plot_by = "distance"
 
-    if theme not in CMAP:
-        theme = "Reds"
+    theme_to_process = (
+        list(CMAP.keys())
+        if not theme or theme == "All"
+        else [theme]
+        if theme in CMAP
+        else ["Reds"]
+    )
 
-    theme_to_process = list(CMAP.keys()) if not theme else [theme]
     encoded_imges = []
 
     for cur_theme in theme_to_process:
