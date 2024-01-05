@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from gridfs import GridFS
+
 from bson import ObjectId
 from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
@@ -29,12 +29,18 @@ config = os.environ
 
 # # Access individual variables
 mongopass = config.get("MONGODB_PASSWORD")
+
 # # # # Connect to MongoDB
-uri = f"mongodb+srv://samliao:{mongopass}@cluster0.cfszocb.mongodb.net/?retryWrites=true&w=majority"
+uri = f"mongodb+srv://samliao:{mongopass}@cluster0.7zimm5o.mongodb.net/?retryWrites=true&w=majority"
 client = MongoClient(uri, username="samliao", password=mongopass)
-db = client["strava-github-profile"]
+db = client["strava-calendar"]
 users_collection = db["users"]
-fs = GridFS(db)
+
+
+@app.route("/users/count", methods=["GET"])
+def count_users():
+    count = users_collection.count_documents({})
+    return {"users-count": count}
 
 
 # # NOTE: The return _id will be stored in localstorage at frontend side
