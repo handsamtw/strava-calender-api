@@ -21,7 +21,7 @@ Strava Calendar API is the API that suppports Strava Calendar app to retrieve St
 
    Description
 
-   While interacting with [Strava Calendar](https://github.com/handsamtw/strava-calender) app, users initiate the authorization process by clicking on the <span><img height=25  width=125 src="./assets/btn-strava.png" /></span> button.
+   While interacting with [Strava Calendar](https://github.com/handsamtw/strava-calender) app, users initiate the authorization process by clicking on the <span><img height=25  width=125 src="./assets/strava/btn-strava.png" /></span> button.
 
    This grants the application READ ALL access to their public Strava activities. Subsequently, Strava provides a code, which is utilized to request an `access_token` and `refresh_token`. The GET /uid endpoint is designed to store these credentials in the database and return a unique user identifier (ObjectID) for future reference.
 
@@ -75,7 +75,7 @@ Strava Calendar API is the API that suppports Strava Calendar app to retrieve St
      - Body: "User wasn't found in the database. Check Strava authorization status" (if user not found in the database)
      - Body: "No activities found within the period" (if no activities found)
 
-### Available Options for Optional Query Parameters
+## Running for development locally
 
 To setup up locally devloping environment of this backend API, here is the todo list
 
@@ -84,7 +84,11 @@ To setup up locally devloping environment of this backend API, here is the todo 
 - [ ] Setup MongoDB Atlas
 - [ ] Setup Strava developer credentials
 - [ ] Add .env file to the root directory
-- [ ] Run locally
+- [ ] Run locally and make a curl request
+
+### Install Python dependencies
+
+cd to project's root directory, and run `pip install`
 
 ### Setup MongoDB Atlas
 
@@ -110,11 +114,19 @@ To setup up locally devloping environment of this backend API, here is the todo 
 ### Setup Strava developer credential
 
 To make request to Strava API, there're three critical credential: CLIENT_ID, CLIENT_SECRET, ACCESS_TOKEN
-If you are a Strava user, you can login to your Strava account and hover to your icon at the top-right corner, click settings (or navigate to https://www.strava.com/settings/profile). At the last tab of left sidebar, there's My API application (or navigate to https://www.strava.com/settings/api). Once you create your application, Strava will grant you devloper Client ID, Client Secret, and access token, which you will use later in .env file
+If you are a Strava user, you can login to your Strava account and hover to your icon at the top-right corner, click [settings](https://www.strava.com/settings/profil).
+
+<img height=200 src="./assets/strava/strava-api-application(1).png" />
+
+Click [My API application](https://www.strava.com/settings/api) at the last tab of left sidebar. Once you create your application, Strava will grant you devloper Client ID, Client Secret, and access token, which you will use later in .env file
+
+<img height=200  src="./assets/strava/strava-api-application(2).png" />
 
 ### Add .env file to the root directory
 
-The .env.example serves as a template for developers to understand the required environment variables without exposing any sensitive data. By filling in your sensitive data and change the file name from `.env.example` to `.env`, the os.config can parse the data and application is expected to run in local environment
+The .env.example serves as a template for developers to understand the required environment variables without exposing any sensitive data.
+
+Replace ACCESS_TOKEN, REFRESH_TOKEN, and MONGODB_PASSWORD in .env.example file to your own credential. Then run `mv .env.example .env` to rename the file
 
 ## Design documentation
 
