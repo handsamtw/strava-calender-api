@@ -49,19 +49,19 @@ def get_all_activities(token):
 
 def summarize_activity(activities, sport_type=None):
     ACTIVITY_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
-    available_sport_type = [
-        "run",
-        "ride",
-        "swim",
-        "walk",
-        "hike",
-        "trail run",
-        "alpine ski",
-        "yoga",
-        "hiit",
-        "weight training",
-        "workout",
-    ]
+    available_sport_type = {
+        "run": "Run",
+        "ride": "Ride",
+        "swim": "Swim",
+        "walk": "Walk",
+        "hike": "Hike",
+        "trail run": "Trail Run",
+        "alpine ski": "Alpine Ski",
+        "yoga": "Yoga",
+        "hiit": "HIIT",
+        "weight training": "Weight Training",
+        "workout": "Workout",
+    }
     # Convert to DataFrame
     df = pd.DataFrame(activities)
 
@@ -72,30 +72,43 @@ def summarize_activity(activities, sport_type=None):
     df.set_index("start_date_local", inplace=True)
     # if sport_type and sport_type in valid_sport_type:
 
-    if sport_type and all(
-        sport.lower() in available_sport_type for sport in sport_type
-    ):
-        df = df[df["type"].isin(sport_type)]
+    if sport_type:
+        filtered_sport_type = []
+        loop_broken = False  # Flag to check if the loop breaks prematurely
+        for sport in sport_type:
+            if sport.lower() in available_sport_type:
+                filtered_sport_type.append(available_sport_type[sport.lower()])
+            else:
+                loop_broken = True
+                break
+        if not loop_broken:
+            df = df[df["type"].isin(filtered_sport_type)]
 
     # Group by date and calculate the sum for each day
-    daily_summary = df.resample("D").agg({"moving_time": "sum", "distance": "sum"})
-    daily_summary.rename(columns={"moving_time": "time"}, inplace=True)
+    # daily_summary = df.resample("D").agg({"moving_time": "sum", "distance": "sum"})
+    daily_summary = df.resample("D").agg({"distance": "sum"})
+    # daily_summary.rename(columns={"moving_time": "time"}, inplace=True)
     # clip all outliers to make visualization more intuitive
     outlier_std = 3
 
     if daily_summary.empty:
         return daily_summary
 
-    for col in daily_summary.columns:
-        max_val = int(
-            np.mean(daily_summary[col]) + outlier_std * np.std(daily_summary[col])
-        )
-        daily_summary[col].clip(0, max_val, inplace=True)
+    max_val = int(
+        np.mean(daily_summary["distance"])
+        + outlier_std * np.std(daily_summary["distance"])
+    )
+    daily_summary["distance"].clip(0, max_val, inplace=True)
+    # for col in daily_summary.columns:
+    # max_val = int(
+    #     np.mean(daily_summary[col]) + outlier_std * np.std(daily_summary[col])
+    # )
+    # daily_summary[col].clip(0, max_val, inplace=True)
 
     return daily_summary
 
 
-def plot_calendar(daily_summary, plot_by="distance", theme="Reds"):
+def plot_calendar(daily_summary, theme="Reds"):
     CMAP = {
         "Reds": "Reds",
         "BuGn": "BuGn",
@@ -105,18 +118,16 @@ def plot_calendar(daily_summary, plot_by="distance", theme="Reds"):
         "RdPu": "RdPu",
         "twilight": "twilight",
     }
-    if plot_by not in ["time", "distance"]:
-        plot_by = "distance"
 
     theme_to_process = (
         list(CMAP.keys()) if theme == "All" else [theme] if theme in CMAP else ["Reds"]
     )
 
     encoded_imges = []
-
+    imageDict = {}
     for cur_theme in theme_to_process:
         fig, ax = calmap.calendarplot(
-            daily_summary[plot_by],
+            daily_summary["distance"],
             daylabels=["M", "TU", "W", "TH", "F", "SA", "SU"],
             cmap=cur_theme,
             linewidth=1,
@@ -128,9 +139,9 @@ def plot_calendar(daily_summary, plot_by="distance", theme="Reds"):
             fig.savefig(buffer, format="png")
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
+            imageDict[cur_theme] = encoded_img
 
-            encoded_imges.append({"theme": cur_theme, "imageUrl": encoded_img})
-    return encoded_imges
+    return imageDict
 
 
 #     # Save plot
@@ -189,10 +200,10 @@ def expire_in_n_minutes(expire_timestamp, minutes=30):
 
 
 def request_token(code):
-    config = os.environ
-    url = config.get("REQUEST_TOKEN_URL")
-    client_id = config.get("CLIENT_ID")
-    client_secret = config.get("CLIENT_SECRET")
+    env = os.environ
+    url = env.get("REQUEST_TOKEN_URL")
+    client_id = env.get("CLIENT_ID")
+    client_secret = env.get("CLIENT_SECRET")
 
     payload = {
         "client_id": client_id,
