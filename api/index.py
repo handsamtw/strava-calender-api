@@ -1,3 +1,5 @@
+import sys
+import os
 from pymongo import MongoClient
 
 from bson import ObjectId
@@ -6,20 +8,23 @@ from flask_cors import CORS
 from flask_caching import Cache
 
 from datetime import datetime, timedelta
-import os
+
 
 from base64 import b64decode
 from dotenv import load_dotenv
 
-# Load variables from .env into the environment
+# Add project_root to the sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from utils import (
+# Load variables from .env into the environment
+from utils.utils import (
     get_all_activities,
     summarize_activity,
     plot_calendar,
     request_token,
     refresh_access_token_if_expired,
 )
+
 
 config = {
     "DEBUG": True,  # some Flask specific configs
@@ -45,6 +50,11 @@ uri = f"mongodb+srv://samliao:{mongopass}@cluster0.7zimm5o.mongodb.net/?retryWri
 client = MongoClient(uri, username="samliao", password=mongopass)
 db = client["strava-calendar"]
 users_collection = db["users"]
+
+
+@app.route("/", methods=["GET"])
+def hello_world():
+    return "Hello, World!"
 
 
 @app.route("/users/count", methods=["GET"])
