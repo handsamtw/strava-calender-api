@@ -1,25 +1,35 @@
 # from ..api.index import app  # Importing the app instance from api.index
-import pytest
 import sys
 import os
 
 # Add project_root to the sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
-# append the path of the
-# parent directory
-# sys.path.append("..")
 from api.index import app
 
 
-@pytest.fixture
-def client():
-    with app.test_client() as client:
-        yield client
+class TestApp:
+    def setup_method(self):
+        self.client = app.test_client()
 
+    def teardown_method(self):
+        pass  # Optionally perform cleanup after each test method
 
-def test_index(client):
-    response = client.get("/")
-    assert response.status_code == 200
-    assert b"Hello, World!" in response.data
+    def test_no_uid(self):
+        url = f"/calendar"
+        response = self.client.get(url)
+        assert response.status_code == 404
+        assert b"User id not found" in response.data
+
+    def test_invalid_uid(self):
+        invalid_uid = os.urandom(13).hex()
+
+        url = f"/calendar?uid={invalid_uid}"
+        response = self.client.get(url)
+        assert response.status_code == 400
+        assert b"Invalid user id" in response.data
+
+    def test_error(self):
+        response = self.client.get("/")
+        assert response.status_code == 404
+        assert b"Custom error message" in response.data

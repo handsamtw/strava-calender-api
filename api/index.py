@@ -7,9 +7,6 @@ from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from flask_caching import Cache
 
-from datetime import datetime, timedelta
-
-
 from base64 import b64decode
 from dotenv import load_dotenv
 
@@ -25,10 +22,10 @@ from utils.utils import (
     refresh_access_token_if_expired,
 )
 
-
+# some Flask specific configs
 config = {
-    "DEBUG": True,  # some Flask specific configs
-    "CACHE_TYPE": "SimpleCache",  # Flask-Caching related configs
+    "DEBUG": True,
+    "CACHE_TYPE": "SimpleCache",
     "CACHE_DEFAULT_TIMEOUT": 300,
     "CORS_HEADERS": "Content-Type",
 }
@@ -42,25 +39,13 @@ load_dotenv()
 env = os.environ
 cache = Cache(app)
 
-# # Access individual variables
 mongopass = env.get("MONGODB_PASSWORD")
 
-# # # # Connect to MongoDB
+# Connect to MongoDB
 uri = f"mongodb+srv://samliao:{mongopass}@cluster0.7zimm5o.mongodb.net/?retryWrites=true&w=majority"
 client = MongoClient(uri, username="samliao", password=mongopass)
 db = client["strava-calendar"]
 users_collection = db["users"]
-
-
-@app.route("/", methods=["GET"])
-def hello_world():
-    return "Hello, World!"
-
-
-@app.route("/users/count", methods=["GET"])
-def count_users():
-    count = users_collection.count_documents({})
-    return {"users-count": count}
 
 
 # # NOTE: The return _id will be stored in localstorage at frontend side
@@ -69,31 +54,40 @@ def generate_user_id():
     code = request.args.get("code")
 
     if not code:
-        return "No code is found in redirect url. Access_token request denied"
+        error_message = {"error": "No code is found in redirect url"}
+        return jsonify(error_message), 400
+
     credentials = request_token(code)
 
     if isinstance(credentials, dict):
         result = users_collection.insert_one(credentials)
         return {"uid": str(result.inserted_id)}
     else:
-        return f"credentials is not an instance of dict.\n Credentials:{credentials}"
+        error_message = {"error": "credentials is not an instance of dict"}
+        return jsonify(error_message), 400
 
 
 # Ref: https://stackoverflow.com/questions/9413566/flask-cache-memoize-url-query-string-parameters-as-well/47181782#47181782
 @app.route("/calendar", methods=["GET"])
-@cache.cached(timeout=30, query_string=True)
+@cache.cached(query_string=True)
 def get_activity_calendar():
     uid = request.args.get("uid")
     if not uid:
-        return "User id must be provided"
+        error_message = {"error": "User id not found"}
+        return jsonify(error_message), 404
+
     if not ObjectId.is_valid(uid):
-        return f"Invalid user id: {uid}"
+        error_message = {"error": "Invalid user id"}
+        return jsonify(error_message), 400
+
     user = users_collection.find_one({"_id": ObjectId(uid)})
     if not user:
-        return f"User wasn't found in database.Check Strava authorization status"
+        error_message = {"error": "User was not found in database"}
+        return jsonify(error_message), 404
+        # return f"User wasn't found in database.Check Strava authorization status"
     access_token = user["access_token"]
     refresh_token_response = refresh_access_token_if_expired(user)
-    if refresh_token_response and "access_token" in refresh_token_response:
+    if refresh_token_response:
         users_collection.update_one(
             {"_id": ObjectId(uid)},
             {
@@ -112,13 +106,12 @@ def get_activity_calendar():
         request.args.get("as_image"),
     )
 
-    activities = get_all_activities(access_token)
-    if len(activities) > 0:
+    activities, status_code = get_all_activities(access_token)
+
+    if status_code == 200 and len(activities) > 0:
         daily_summary = summarize_activity(
             activities, sport_type=sport_type.split(",") if sport_type else None
         )
-        if daily_summary.empty:
-            return "No activities found within the period"
 
         existing_data = users_collection.find_one({"_id": ObjectId(uid)})
         current_image_src = existing_data.get(f"{sport_type}-imageSrc", {})
@@ -131,7 +124,7 @@ def get_activity_calendar():
 
         users_collection.update_one(
             {"_id": ObjectId(uid)},
-            {"$set": {f"{sport_type}-imageSrc": merged_image_dict}},
+            {"$set": {f"{sport_type.lower()}-imageSrc": merged_image_dict}},
         )
 
         if as_image and as_image.lower() == "true":
