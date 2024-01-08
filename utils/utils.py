@@ -19,7 +19,7 @@ def get_all_activities(token):
     headers = {"Authorization": f"Bearer {token}"}
     activities = []
     per_page = 200
-    required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
+    required_columns = ["name", "distance", "type", "start_date_local"]
     for page_num in range(1, 10):
         print(f"Page: {page_num}")
         response = requests.request(
@@ -29,22 +29,20 @@ def get_all_activities(token):
             data=payload,
         )
         if response.status_code != 200:
-            print(response.status_code, response.content)
-            break
+            return response.json(), response.status_code
         else:
             result = response.json()
             if isinstance(result, list) and len(result) > 0:
                 for activity in result:
                     selected_data = {col: activity[col] for col in required_columns}
                     activities.append(selected_data)
-                if len(result) < 200:
-                    print("We have fetched all the data. Yaho")
+                # We have fetched all the data
+                if len(result) < per_page:
                     break
             else:
-                print("No valid result")
                 break
 
-    return activities
+    return activities, 200
 
 
 def summarize_activity(activities, sport_type=None):
@@ -202,6 +200,7 @@ def expire_in_n_minutes(expire_timestamp, minutes=30):
 def request_token(code):
     env = os.environ
     url = env.get("REQUEST_TOKEN_URL")
+
     client_id = env.get("CLIENT_ID")
     client_secret = env.get("CLIENT_SECRET")
 
@@ -219,10 +218,10 @@ def request_token(code):
             "access_token": data["access_token"],
             "refresh_token": data["refresh_token"],
             "expires_at": data["expires_at"],
-        }
+        }, 200
 
     else:
-        return "Error!!!"
+        return response.json(), response.status_code
 
 
 # def html_to_activity_image(activity_id):
