@@ -67,6 +67,8 @@ def summarize_activity(activities, sport_type=None):
     df["start_date_local"] = pd.to_datetime(
         df["start_date_local"], format=ACTIVITY_FORMAT
     )
+    earliest_date = df["start_date_local"].min()
+    latest_date = df["start_date_local"].max()
     df.set_index("start_date_local", inplace=True)
     # if sport_type and sport_type in valid_sport_type:
 
@@ -82,26 +84,28 @@ def summarize_activity(activities, sport_type=None):
         if not loop_broken:
             df = df[df["type"].isin(filtered_sport_type)]
 
+    # If df is empty, create a DataFrame with zeros so users could still get an empty calendar
+    if df.empty:
+        return (
+            pd.DataFrame(
+                {"distance": [0]},
+                index=pd.date_range(start=earliest_date, end=latest_date, freq="D"),
+            )
+            .resample("D")
+            .agg({"distance": "sum"})
+        )
+
     # Group by date and calculate the sum for each day
-    # daily_summary = df.resample("D").agg({"moving_time": "sum", "distance": "sum"})
     daily_summary = df.resample("D").agg({"distance": "sum"})
-    # daily_summary.rename(columns={"moving_time": "time"}, inplace=True)
+
     # clip all outliers to make visualization more intuitive
     outlier_std = 3
-
-    if daily_summary.empty:
-        return daily_summary
 
     max_val = int(
         np.mean(daily_summary["distance"])
         + outlier_std * np.std(daily_summary["distance"])
     )
     daily_summary["distance"].clip(0, max_val, inplace=True)
-    # for col in daily_summary.columns:
-    # max_val = int(
-    #     np.mean(daily_summary[col]) + outlier_std * np.std(daily_summary[col])
-    # )
-    # daily_summary[col].clip(0, max_val, inplace=True)
 
     return daily_summary
 

@@ -26,7 +26,7 @@ from utils.utils import (
 config = {
     "DEBUG": True,
     "CACHE_TYPE": "SimpleCache",
-    "CACHE_DEFAULT_TIMEOUT": 60,
+    "CACHE_DEFAULT_TIMEOUT": 300,
     "CORS_HEADERS": "Content-Type",
 }
 app = Flask(__name__)
@@ -112,8 +112,6 @@ def get_activity_calendar():
         daily_summary = summarize_activity(
             activities, sport_type=sport_type.split(",") if sport_type else None
         )
-        if daily_summary.empty:
-            return "No activities found within the period"
 
         existing_data = users_collection.find_one({"_id": ObjectId(uid)})
         current_image_src = existing_data.get(f"{sport_type}-imageSrc", {})
@@ -126,7 +124,7 @@ def get_activity_calendar():
 
         users_collection.update_one(
             {"_id": ObjectId(uid)},
-            {"$set": {f"{sport_type}-imageSrc": merged_image_dict}},
+            {"$set": {f"{sport_type.lower()}-imageSrc": merged_image_dict}},
         )
 
         if as_image and as_image.lower() == "true":
