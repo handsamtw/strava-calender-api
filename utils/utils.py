@@ -1,13 +1,15 @@
+import io
+import os
 from base64 import b64encode
+from datetime import datetime, timedelta
+
 import requests
 import numpy as np
 import pandas as pd
-import io
+
 import calmap
-import os
 
 
-from datetime import datetime, timedelta
 import matplotlib as mpl
 
 
@@ -27,26 +29,27 @@ def get_all_activities(token):
             f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}",
             headers=headers,
             data=payload,
+            timeout=1000,
         )
         if response.status_code != 200:
             return response.json(), response.status_code
-        else:
-            result = response.json()
-            if isinstance(result, list) and len(result) > 0:
-                for activity in result:
-                    selected_data = {col: activity[col] for col in required_columns}
-                    activities.append(selected_data)
-                # We have fetched all the data
-                if len(result) < per_page:
-                    break
-            else:
+
+        result = response.json()
+        if isinstance(result, list) and len(result) > 0:
+            for activity in result:
+                selected_data = {col: activity[col] for col in required_columns}
+                activities.append(selected_data)
+            # We have fetched all the data
+            if len(result) < per_page:
                 break
+        else:
+            break
 
     return activities, 200
 
 
 def summarize_activity(activities, sport_type=None):
-    ACTIVITY_FORMAT = "%Y-%m-%dT%H:%M:%SZ"
+    activity_format = "%Y-%m-%dT%H:%M:%SZ"
     available_sport_type = {
         "run": "Run",
         "ride": "Ride",
@@ -65,7 +68,7 @@ def summarize_activity(activities, sport_type=None):
 
     # Convert 'start_date_local' to datetime and set it as the index
     df["start_date_local"] = pd.to_datetime(
-        df["start_date_local"], format=ACTIVITY_FORMAT
+        df["start_date_local"], format=activity_format
     )
     earliest_date = df["start_date_local"].min()
     latest_date = df["start_date_local"].max()
@@ -111,7 +114,7 @@ def summarize_activity(activities, sport_type=None):
 
 
 def plot_calendar(daily_summary, theme="Reds"):
-    CMAP = {
+    c_map = {
         "Reds": "Reds",
         "BuGn": "BuGn",
         "Greens": "Greens",
@@ -122,13 +125,16 @@ def plot_calendar(daily_summary, theme="Reds"):
     }
 
     theme_to_process = (
-        list(CMAP.keys()) if theme == "All" else [theme] if theme in CMAP else ["Reds"]
+        list(c_map.keys())
+        if theme == "All"
+        else [theme]
+        if theme in c_map
+        else ["Reds"]
     )
 
-    encoded_imges = []
-    imageDict = {}
+    image_dict = {}
     for cur_theme in theme_to_process:
-        fig, ax = calmap.calendarplot(
+        fig, _ = calmap.calendarplot(
             daily_summary["distance"],
             daylabels=["M", "TU", "W", "TH", "F", "SA", "SU"],
             cmap=cur_theme,
@@ -141,9 +147,9 @@ def plot_calendar(daily_summary, theme="Reds"):
             fig.savefig(buffer, format="png")
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
-            imageDict[cur_theme] = encoded_img
+            image_dict[cur_theme] = encoded_img
 
-    return imageDict
+    return image_dict
 
 
 #     # Save plot
@@ -164,7 +170,7 @@ def refresh_access_token_if_expired(user):
             "grant_type": "refresh_token",
             "refresh_token": user["refresh_token"],
         }
-        response = requests.post(url, data=refresh_data)
+        response = requests.post(url, data=refresh_data, timeout=1000)
         return response.json()
 
 
@@ -215,7 +221,7 @@ def request_token(code):
         "grant_type": "authorization_code",
     }
 
-    response = requests.request("POST", url, data=payload)
+    response = requests.request("POST", url, data=payload, timeout=1000)
     if response.status_code == 200:
         data = response.json()
         return {
@@ -224,8 +230,7 @@ def request_token(code):
             "expires_at": data["expires_at"],
         }, 200
 
-    else:
-        return response.json(), response.status_code
+    return response.json(), response.status_code
 
 
 # def html_to_activity_image(activity_id):

@@ -1,15 +1,15 @@
 # from ..api.index import app  # Importing the app instance from api.index
 import sys
 import os
-
 from bson import ObjectId
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # Add project_root to the sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from utils.utils import get_all_activities, refresh_access_token_if_expired
-from dotenv import load_dotenv
-from pymongo import MongoClient
+
 
 load_dotenv()
 env = os.environ
