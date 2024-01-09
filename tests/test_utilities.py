@@ -39,8 +39,10 @@ def test_valid_activities():
     uid = env.get("TEST_UID")
     user = users_collection.find_one({"_id": ObjectId(uid)})
     access_token = user["access_token"]
+    print(access_token)
     refresh_token_response = refresh_access_token_if_expired(user)
     if refresh_token_response:
+        print(refresh_token_response)
         access_token = refresh_token_response["access_token"]
     response, status_code = get_all_activities(access_token)
     assert status_code == 200
