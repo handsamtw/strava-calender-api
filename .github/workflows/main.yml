@@ -1,0 +1,38 @@
+name: Run Tests and Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - "*" # Trigger for all branches
+
+  pull_request:
+    branches:
+      - main # Specify the branch you want to trigger the workflow
+env:
+  MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
+  CLIENT_ID: ${{ secrets.CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.CLIENT_SECRET}}
+  ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN}}
+  REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN}}
+  TEST_UID: ${{ secrets.TEST_UID}}
+  REQUEST_TOKEN_URL: ${{secrets.REQUEST_TOKEN_URL}}
+  REFRESH_TOKEN_URL: ${{secrets.REFRESH_TOKEN_URL}}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        run: pytest tests/
