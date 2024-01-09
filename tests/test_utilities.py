@@ -38,8 +38,15 @@ def test_invalid_token():
 
 
 def test_valid_activities():
-    uid = env.get("TEST_UID")
-    user = users_collection.find_one({"_id": ObjectId(uid)})
+    # uid = env.get("TEST_UID")
+    uid = os.environ.get("TEST_UID")
+    if uid:
+        # Use uid in your code
+        user = users_collection.find_one({"_id": ObjectId(uid)})
+    else:
+        print("TEST_UID environment variable is not set")
+        uid = "65985d9ef1bd9d46ad69ab66"
+        user = users_collection.find_one({"_id": ObjectId(uid)})
 
     access_token = user["access_token"]
     refresh_token_response = refresh_access_token_if_expired(user)
