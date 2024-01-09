@@ -87,7 +87,9 @@ def get_activity_calendar():
         return jsonify(error_message), 404
         # return f"User wasn't found in database.Check Strava authorization status"
     access_token = user["access_token"]
-    refresh_token_response = refresh_access_token_if_expired(user)
+    refresh_token_response, status_code = refresh_access_token_if_expired(user)
+    if status_code != 200:
+        return refresh_token_response, status_code
     if refresh_token_response:
         users_collection.update_one(
             {"_id": ObjectId(uid)},

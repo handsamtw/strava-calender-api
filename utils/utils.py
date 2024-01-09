@@ -209,15 +209,20 @@ def refresh_access_token_if_expired(user):
             (access token, refresh token, expires_at). Returns None if no token refresh was performed.
     """
     if expire_in_n_minutes(user["expires_at"], 30):
-        url = os.getenv("REFRESH_TOKEN_URL")
+        refresh_token_url = os.getenv("REFRESH_TOKEN_URL")
+        print(refresh_token_url)
         refresh_data = {
             "client_id": os.getenv("CLIENT_ID"),
             "client_secret": os.getenv("CLIENT_SECRET"),
             "grant_type": "refresh_token",
             "refresh_token": user["refresh_token"],
         }
-        response = requests.post(url, data=refresh_data, timeout=1000)
-        return response.json()
+        print(refresh_data)
+        response = requests.post(refresh_data, data=refresh_data, timeout=1000)
+
+        return response.json(), response.status_code
+
+    return {}, 200
 
 
 def expire_in_n_minutes(expire_timestamp, minutes=30):
