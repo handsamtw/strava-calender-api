@@ -1,15 +1,14 @@
-# from ..api.index import app  # Importing the app instance from api.index
 import sys
 import os
-
 from bson import ObjectId
+from dotenv import load_dotenv
+from pymongo import MongoClient
 
 # Add project_root to the sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from utils.utils import get_all_activities, refresh_access_token_if_expired
-from dotenv import load_dotenv
-from pymongo import MongoClient
+
 
 load_dotenv()
 env = os.environ
@@ -24,6 +23,7 @@ users_collection = db["users"]
 
 
 def test_invalid_token():
+    """Test case to verify handling of invalid token."""
     token = "abc"
     error_response, status_code = get_all_activities(token)
     expect_error_response = {
@@ -36,14 +36,16 @@ def test_invalid_token():
 
 
 def test_valid_activities():
+    """Test case to verify retrieval of valid activities."""
     uid = env.get("TEST_UID")
     user = users_collection.find_one({"_id": ObjectId(uid)})
     access_token = user["access_token"]
-    print(access_token)
-    refresh_token_response = refresh_access_token_if_expired(user)
+    refresh_token_response, status_code = refresh_access_token_if_expired(user)
+    print(refresh_token_response)
+    assert status_code == 200
     if refresh_token_response:
-        print(refresh_token_response)
         access_token = refresh_token_response["access_token"]
+
     response, status_code = get_all_activities(access_token)
     assert status_code == 200
     assert 400 < len(response) < 500

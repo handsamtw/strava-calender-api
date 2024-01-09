@@ -1,5 +1,6 @@
 import sys
 import os
+from base64 import b64decode
 from pymongo import MongoClient
 
 from bson import ObjectId
@@ -7,7 +8,7 @@ from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
 from flask_caching import Cache
 
-from base64 import b64decode
+
 from dotenv import load_dotenv
 
 # Add project_root to the sys.path
@@ -62,12 +63,12 @@ def generate_user_id():
     if isinstance(credentials, dict):
         result = users_collection.insert_one(credentials)
         return {"uid": str(result.inserted_id)}
-    else:
-        error_message = {"error": "credentials is not an instance of dict"}
-        return jsonify(error_message), 400
+
+    error_message = {"error": "credentials is not an instance of dict"}
+    return jsonify(error_message), 400
 
 
-# Ref: https://stackoverflow.com/questions/9413566/flask-cache-memoize-url-query-string-parameters-as-well/47181782#47181782
+# Ref: stackoverflow flask-cache-memoize-url-query-string-parameters-as-well
 @app.route("/calendar", methods=["GET"])
 @cache.cached(query_string=True)
 def get_activity_calendar():
@@ -86,7 +87,9 @@ def get_activity_calendar():
         return jsonify(error_message), 404
         # return f"User wasn't found in database.Check Strava authorization status"
     access_token = user["access_token"]
-    refresh_token_response = refresh_access_token_if_expired(user)
+    refresh_token_response, status_code = refresh_access_token_if_expired(user)
+    if status_code != 200:
+        return refresh_token_response, status_code
     if refresh_token_response:
         users_collection.update_one(
             {"_id": ObjectId(uid)},
