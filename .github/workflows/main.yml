@@ -8,19 +8,18 @@ on:
   pull_request:
     branches:
       - main # Specify the branch you want to trigger the workflow
-
+env:
+  MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
+  CLIENT_ID: ${{ secrets.CLIENT_ID }}
+  CLIENT_SECRET: ${{ secrets.CLIENT_SECRET}}
+  ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN}}
+  REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN}}
+  TEST_UID: ${{ secrets.TEST_UID}}
+  REQUEST_TOKEN_URL: ${{secrets.REQUEST_TOKEN_URL}}
+  REFRESH_TOKEN_URL: ${{secrets.REFRESH_TOKEN_URL}}
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
-      CLIENT_ID: ${{ secrets.CLIENT_ID }}
-      CLIENT_SECRET: ${{ secrets.CLIENT_SECRET}}
-      ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN}}
-      REFRESH_TOKEN: ${{ secrets.REFRESH_TOKEN}}
-      TEST_UID: ${{ secrets.TEST_UID}}
-      REQUEST_TOKEN_URL: ${{secrets.REQUEST_TOKEN_URL}}
-      REFRESH_TOKEN_URL: ${{secrets.REFRESH_TOKEN_URL}}
 
     steps:
       - name: Checkout code
