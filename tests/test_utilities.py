@@ -1,4 +1,3 @@
-# from ..api.index import app  # Importing the app instance from api.index
 import sys
 import os
 from bson import ObjectId
@@ -24,6 +23,7 @@ users_collection = db["users"]
 
 
 def test_invalid_token():
+    """Test case to verify handling of invalid token."""
     token = "abc"
     error_response, status_code = get_all_activities(token)
     expect_error_response = {
@@ -36,6 +36,7 @@ def test_invalid_token():
 
 
 def test_valid_activities():
+    """Test case to verify retrieval of valid activities."""
     uid = env.get("TEST_UID")
     user = users_collection.find_one({"_id": ObjectId(uid)})
     access_token = user["access_token"]
