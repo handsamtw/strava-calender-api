@@ -26,8 +26,8 @@ users_collection = db["users"]
 
 
 def test_load_secrets():
-    assert env.get("REQUEST_TOKEN_URL") == "https://www.strava.com/oauth/token"
-    assert env.get("REFRESH_TOKEN_URL") == "https://www.strava.com/api/v3/oauth/token"
+    assert os.environ["REQUEST_TOKEN_URL"] == "https://www.strava.com/oauth/token"
+    assert os.environ["REFRESH_TOKEN"] == "https://www.strava.com/api/v3/oauth/token"
 
 
 # def test_invalid_token():
