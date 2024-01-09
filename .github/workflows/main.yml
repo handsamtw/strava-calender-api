@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
       - name: Run Pylint
-        run: pylint *.py --fail-under=6 # Adjust the score threshold as needed
+        run: ./**/*.py --fail-under=6 # Adjust the score threshold as needed
         continue-on-error: false # Continue with the next steps even if Pylint fails to meet the threshold
 
       - name: Run pytest
