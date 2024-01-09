@@ -1,0 +1,40 @@
+name: Run Tests and Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - "*" # Trigger for all branches
+
+  pull_request:
+    branches:
+      - main # Specify the branch you want to trigger the workflow
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.10" # Specify your Python version
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run pytest
+        run: pytest tests/
+
+  deploy_to_vercel:
+    needs: test # Ensure the 'test' job is successful before deploying
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to Vercel
+        run: vercel --prod
+        # Replace 'vercel --prod' with the appropriate deployment command

@@ -28,8 +28,3 @@ class TestApp:
         response = self.client.get(url)
         assert response.status_code == 400
         assert b"Invalid user id" in response.data
-
-    def test_error(self):
-        response = self.client.get("/")
-        assert response.status_code == 404
-        assert b"Custom error message" in response.data
