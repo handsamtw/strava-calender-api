@@ -32,7 +32,7 @@ def get_all_activities(token):
     headers = {"Authorization": f"Bearer {token}"}
     activities = []
     per_page = 200
-    required_columns = ["name", "distance", "type", "start_date_local"]
+    required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
 
     # Iterate through a maximum of 10 pages, which is 2000 activities (suppose to applied to most users)
     for page_num in range(1, 10):
@@ -104,39 +104,42 @@ def summarize_activity(activities, sport_type=None):
             "weight training": "Weight Training",
             "workout": "Workout",
         }
+
+        sports_evl_by_time = ["yoga", "hiit", "weight training", "workout"]
         filtered_sport_type = []
         loop_broken = False  # Flag to check if the loop breaks prematurely
+        eval_metric = "distance"
         for sport in sport_type:
             if sport.lower() in available_sport_type:
                 filtered_sport_type.append(available_sport_type[sport.lower()])
+                if sport.lower() in sports_evl_by_time:
+                    eval_metric = "moving_time"
             else:
                 loop_broken = True
                 break
         if not loop_broken:
             df = df[df["type"].isin(filtered_sport_type)]
-
     # If df is empty, create a DataFrame with zeros so users could still get an empty calendar
     if df.empty:
         return (
             pd.DataFrame(
-                {"distance": [0]},
+                {eval_metric: [0]},
                 index=pd.date_range(start=earliest_date, end=latest_date, freq="D"),
             )
             .resample("D")
-            .agg({"distance": "sum"})
+            .agg({eval_metric: "sum"})
         )
 
     # Group by date and calculate the sum for each day
-    daily_summary = df.resample("D").agg({"distance": "sum"})
+    daily_summary = df.resample("D").agg({eval_metric: "sum"})
 
     # Clip outliers in the distance values for visualization clarity
     outlier_std = 3
     max_val = int(
-        np.mean(daily_summary["distance"])
-        + outlier_std * np.std(daily_summary["distance"])
+        np.mean(daily_summary[eval_metric])
+        + outlier_std * np.std(daily_summary[eval_metric])
     )
-    daily_summary["distance"].clip(0, max_val, inplace=True)
-
+    daily_summary[eval_metric].clip(0, max_val, inplace=True)
     return daily_summary
 
 
@@ -180,7 +183,7 @@ def plot_calendar(daily_summary, theme="Reds"):
     # Generate calendar heatmap for each theme in 'theme_to_process'
     for cur_theme in theme_to_process:
         fig, _ = calmap.calendarplot(
-            daily_summary["distance"],
+            daily_summary.iloc[:, 0],
             daylabels=["M", "TU", "W", "TH", "F", "SA", "SU"],
             cmap=cur_theme,
             linewidth=1,
@@ -210,15 +213,13 @@ def refresh_access_token_if_expired(user):
     """
     if expire_in_n_minutes(user["expires_at"], 30):
         refresh_token_url = os.getenv("REFRESH_TOKEN_URL")
-        print(refresh_token_url)
         refresh_data = {
             "client_id": os.getenv("CLIENT_ID"),
             "client_secret": os.getenv("CLIENT_SECRET"),
             "grant_type": "refresh_token",
             "refresh_token": user["refresh_token"],
         }
-        print(refresh_data)
-        response = requests.post(refresh_data, data=refresh_data, timeout=1000)
+        response = requests.post(refresh_token_url, data=refresh_data, timeout=1000)
 
         return response.json(), response.status_code
 
