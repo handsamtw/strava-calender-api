@@ -128,6 +128,14 @@ The .env.example serves as a template for developers to understand the required 
 
 Replace ACCESS_TOKEN, REFRESH_TOKEN, and MONGODB_PASSWORD in .env.example file to your own credential. Then run `mv .env.example .env` to rename the file
 
+## How to Contribute
+
+Before making PR request, please
+
+- Run `pytest tests` ensuring all test cases pass
+- Run `pylint ./**/*.py` ensuring the score is above 7/10. It would be great if you
+  can also help out on improving the score
+
 ## Design documentation
 
 ### User flow
