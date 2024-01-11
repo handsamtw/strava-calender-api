@@ -294,6 +294,30 @@ def request_token(code):
     return response.json(), response.status_code
 
 
+def get_last_activity_id(access_token):
+    """
+    Fetches the ID of the last activity using the provided Strava access token.
+
+    Parameters:
+    - access_token (str): The Strava access token for authentication.
+
+    Returns:
+    Tuple[int, int] or Tuple[dict, int]: A tuple containing the last activity ID and HTTP status code (200),
+    or a tuple containing the error response JSON and the corresponding HTTP status code.
+    """
+    url = "https://www.strava.com/api/v3/activities?per_page=1&page=1"
+    headers = {"Authorization": f"Bearer {access_token}"}
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+        if isinstance(data, list) and len(data) > 0 and "id" in data[0]:
+            return data[0]["id"], 200
+
+    return response.json(), response.status_code
+
+
 # def html_to_activity_image(activity_id):
 #     output_path = "/tmp"
 #     hti = Html2Image(output_path=output_path)
@@ -308,22 +332,3 @@ def request_token(code):
 #     with open(f"{output_path}/my_image.png", "rb") as file:
 #         image_data = file.read()
 #         return image_data
-
-
-# def get_most_recent_activity_id(access_token):
-#     url = f"{ACTIVITIES_URL}?per_page=1&page=1"
-#     headers = {"Authorization": f"Bearer {access_token}"}
-
-#     response = requests.get(url, headers=headers)
-
-#     if response.status_code == 200:
-#         data = response.json()
-#         if isinstance(data, list) and len(data) > 0 and "id" in data[0]:
-#             return data[0]["id"]
-
-#         else:
-#             print(f"Check response type")
-#             return None
-#     else:
-#         print(f"Failed to retrieve data. Status code: {response.status_code}")
-#         return None

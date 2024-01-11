@@ -21,13 +21,14 @@ from utils.utils import (
     plot_calendar,
     request_token,
     refresh_access_token_if_expired,
+    get_last_activity_id,
 )
 
 # some Flask specific configs
 config = {
     "DEBUG": True,
     "CACHE_TYPE": "SimpleCache",
-    "CACHE_DEFAULT_TIMEOUT": 300,
+    "CACHE_DEFAULT_TIMEOUT": 120,
     "CORS_HEADERS": "Content-Type",
 }
 app = Flask(__name__)
@@ -108,38 +109,47 @@ def get_activity_calendar():
         request.args.get("theme"),
         request.args.get("as_image"),
     )
+    cache_key = f"{sport_type.lower()}-imageSrc"
+    last_activity_id, status_code = get_last_activity_id(access_token)
+    if (
+        status_code == 200
+        and "last_activity_id" in user
+        and user["last_activity_id"] == last_activity_id
+        and cache_key in user
+    ):
+        print("Return cache")
+        new_image_src = user[cache_key]
+    else:
+        activities, status_code = get_all_activities(access_token)
+        if status_code == 200 and len(activities) > 0:
+            daily_summary = summarize_activity(
+                activities, sport_type=sport_type.split(",") if sport_type else None
+            )
 
-    activities, status_code = get_all_activities(access_token)
+            new_image_src = plot_calendar(
+                daily_summary,
+                theme="All",
+            )
+            users_collection.update_one(
+                {"_id": ObjectId(uid)},
+                {
+                    "$set": {
+                        cache_key: new_image_src,
+                        "last_activity_id": last_activity_id,
+                    }
+                },
+            )
 
-    if status_code == 200 and len(activities) > 0:
-        daily_summary = summarize_activity(
-            activities, sport_type=sport_type.split(",") if sport_type else None
-        )
+    if as_image and as_image.lower() == "true":
+        # Decode the base64 string to bytes
+        image_data = b64decode(new_image_src[theme])
 
-        existing_data = users_collection.find_one({"_id": ObjectId(uid)})
-        current_image_src = existing_data.get(f"{sport_type}-imageSrc", {})
-        new_image_src = plot_calendar(
-            daily_summary,
-            theme=theme,
-        )
+        # Set the appropriate content type for the response
+        response = Response(image_data, mimetype="image/png")
 
-        merged_image_dict = {**current_image_src, **new_image_src}
+        return response
 
-        users_collection.update_one(
-            {"_id": ObjectId(uid)},
-            {"$set": {f"{sport_type.lower()}-imageSrc": merged_image_dict}},
-        )
-
-        if as_image and as_image.lower() == "true":
-            # Decode the base64 string to bytes
-            image_data = b64decode(new_image_src[theme])
-
-            # Set the appropriate content type for the response
-            response = Response(image_data, mimetype="image/png")
-
-            return response
-
-        return new_image_src
+    return new_image_src
 
 
 if __name__ == "__main__":
