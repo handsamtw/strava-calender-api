@@ -140,8 +140,8 @@ Before making PR request, please
 
 ### User flow
 
-![user flow](docs/[strava-github-profile]%20user%20flow.png)
+![user flow](docs/[strava-calendar]%20user%20flow.png)
 
 ### Image Generation flow
 
-![Image generation flow](docs/[strava-github-profile]%20Image%20generation%20flow.png)
+![Image generation flow](docs/[strava-calendar]%20Image-gen%20flow.png)
