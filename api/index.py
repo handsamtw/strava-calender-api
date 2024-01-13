@@ -59,13 +59,12 @@ def generate_user_id():
         error_message = {"error": "No code is found in redirect url"}
         return jsonify(error_message), 400
 
-    credentials = request_token(code)
-
-    if isinstance(credentials, dict):
+    credentials, status_code = request_token(code)
+    if status_code == 200:
         result = users_collection.insert_one(credentials)
         return {"uid": str(result.inserted_id)}
 
-    error_message = {"error": "credentials is not an instance of dict"}
+    error_message = {"error": credentials}
     return jsonify(error_message), 400
 
 
