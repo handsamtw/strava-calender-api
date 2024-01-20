@@ -7,8 +7,7 @@ import requests
 import numpy as np
 import pandas as pd
 
-import calmap
-
+import calplot
 
 import matplotlib as mpl
 
@@ -182,17 +181,22 @@ def plot_calendar(daily_summary, theme="Reds"):
 
     # Generate calendar heatmap for each theme in 'theme_to_process'
     for cur_theme in theme_to_process:
-        fig, _ = calmap.calendarplot(
+        fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0],
-            daylabels=["M", "TU", "W", "TH", "F", "SA", "SU"],
             cmap=cur_theme,
             linewidth=1,
             linecolor="white",
-            fig_kws={"figsize": (8, 5)},  # Use dictionary literal
+            edgecolor=None,
+            yearlabel_kws=dict(
+                fontsize=32,
+                color="Gainsboro",
+                fontname="Arial",
+            ),
         )
+
         # Encode the generated image to base64 and store it in 'image_dict'
         with io.BytesIO() as buffer:
-            fig.savefig(buffer, format="png")
+            fig.savefig(buffer, bbox_inches="tight", dpi=400, format="png")
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
             image_dict[cur_theme] = encoded_img

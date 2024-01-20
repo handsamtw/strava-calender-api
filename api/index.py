@@ -73,6 +73,7 @@ def generate_user_id():
 @cache.cached(query_string=True)
 def get_activity_calendar():
     uid = request.args.get("uid")
+    print(uid)
     if not uid:
         error_message = {"error": "User id not found"}
         return jsonify(error_message), 404
@@ -138,6 +139,11 @@ def get_activity_calendar():
                     }
                 },
             )
+        else:
+            error_message = {"error": "No activity found in this account"}
+            return jsonify(error_message), 404
+
+            return "No activity found in this account"
 
     if as_image and as_image.lower() == "true":
         # Decode the base64 string to bytes
