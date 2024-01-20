@@ -187,11 +187,7 @@ def plot_calendar(daily_summary, theme="Reds"):
             linewidth=1,
             linecolor="white",
             edgecolor=None,
-            yearlabel_kws=dict(
-                fontsize=32,
-                color="Gainsboro",
-                fontname="Arial",
-            ),
+            yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
         )
 
         # Encode the generated image to base64 and store it in 'image_dict'
@@ -312,7 +308,7 @@ def get_last_activity_id(access_token):
     url = "https://www.strava.com/api/v3/activities?per_page=1&page=1"
     headers = {"Authorization": f"Bearer {access_token}"}
 
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, timeout=3)
 
     if response.status_code == 200:
         data = response.json()

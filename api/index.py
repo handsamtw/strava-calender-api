@@ -143,8 +143,6 @@ def get_activity_calendar():
             error_message = {"error": "No activity found in this account"}
             return jsonify(error_message), 404
 
-            return "No activity found in this account"
-
     if as_image and as_image.lower() == "true":
         # Decode the base64 string to bytes
         image_data = b64decode(new_image_src[theme])
