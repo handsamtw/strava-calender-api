@@ -187,7 +187,7 @@ def plot_calendar(daily_summary, theme="Reds"):
             linewidth=1,
             linecolor="white",
             edgecolor=None,
-            yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
+            # yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
         )
 
         # Encode the generated image to base64 and store it in 'image_dict'
