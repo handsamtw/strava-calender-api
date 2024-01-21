@@ -129,7 +129,8 @@ def get_activity_calendar():
 
             new_image_src = plot_calendar(
                 daily_summary,
-                theme="All",
+                # theme="All",
+                theme=theme,
             )
             users_collection.update_one(
                 {"_id": ObjectId(uid)},
