@@ -121,6 +121,7 @@ def get_activity_calendar():
         new_image_src = user[cache_key]
     else:
         activities, status_code = get_all_activities(access_token)
+        return activities
         if status_code == 200 and len(activities) > 0:
             daily_summary = summarize_activity(
                 activities, sport_type=sport_type.split(",") if sport_type else None

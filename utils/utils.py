@@ -42,7 +42,7 @@ def get_all_activities(token):
             f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}",
             headers=headers,
             data=payload,
-            timeout=1000,
+            timeout=3,
         )
         if response.status_code != 200:
             return response.json(), response.status_code
@@ -220,7 +220,7 @@ def refresh_access_token_if_expired(user):
             "grant_type": "refresh_token",
             "refresh_token": user["refresh_token"],
         }
-        response = requests.post(refresh_token_url, data=refresh_data, timeout=1000)
+        response = requests.post(refresh_token_url, data=refresh_data, timeout=3)
 
         return response.json(), response.status_code
 
@@ -283,7 +283,7 @@ def request_token(code):
         "grant_type": "authorization_code",
     }
 
-    response = requests.request("POST", url, data=payload, timeout=1000)
+    response = requests.request("POST", url, data=payload, timeout=3)
     if response.status_code == 200:
         data = response.json()
         return {
