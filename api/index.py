@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 from base64 import b64decode
 from pymongo import MongoClient
 
@@ -72,6 +73,7 @@ def generate_user_id():
 @app.route("/calendar", methods=["GET"])
 @cache.cached(query_string=True)
 def get_activity_calendar():
+    start = time.time()
     uid = request.args.get("uid")
     print(uid)
     if not uid:
@@ -144,7 +146,7 @@ def get_activity_calendar():
         else:
             error_message = {"error": "No activity found in this account"}
             return jsonify(error_message), 404
-
+    print("Run time:", time.time() - start)
     if as_image and as_image.lower() == "true":
         # Decode the base64 string to bytes
         image_data = b64decode(new_image_src[theme])
