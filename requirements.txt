@@ -11,3 +11,4 @@ Flask-Caching==2.1.0
 pytest==7.4.4
 pylint==3.0.3
 calplot==0.1.7.5
+calmap==0.0.11

@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import requests
 import numpy as np
 import pandas as pd
-
+import calmap
 import calplot
 
 import matplotlib as mpl
@@ -181,13 +181,20 @@ def plot_calendar(daily_summary, theme="Reds"):
 
     # Generate calendar heatmap for each theme in 'theme_to_process'
     for cur_theme in theme_to_process:
-        fig, _ = calplot.calplot(
+        # fig, _ = calplot.calplot(
+        #     daily_summary.iloc[:, 0],
+        #     cmap=cur_theme,
+        #     linewidth=1,
+        #     linecolor="white",
+        #     edgecolor=None,
+        #     # yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
+        # )
+        fig, _ = calmap.calendarplot(
             daily_summary.iloc[:, 0],
             cmap=cur_theme,
             linewidth=1,
             linecolor="white",
             edgecolor=None,
-            # yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
         )
 
         # Encode the generated image to base64 and store it in 'image_dict'

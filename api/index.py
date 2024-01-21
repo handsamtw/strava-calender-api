@@ -126,7 +126,7 @@ def get_activity_calendar():
             daily_summary = summarize_activity(
                 activities, sport_type=sport_type.split(",") if sport_type else None
             )
-            return daily_summary.head().to_json()
+
             new_image_src = plot_calendar(
                 daily_summary,
                 theme="All",
