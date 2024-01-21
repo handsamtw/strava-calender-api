@@ -8,6 +8,9 @@ import numpy as np
 import pandas as pd
 import calmap
 import calplot
+import concurrent.futures
+import aiohttp
+import asyncio
 
 import matplotlib as mpl
 
@@ -15,40 +18,84 @@ import matplotlib as mpl
 mpl.use("agg")
 
 
-def get_all_activities(token):
-    """
-    Retrieves all activities using the provided token from the Strava API.
+# def get_all_activities(token):
+#     """
+#     Retrieves all activities using the provided token from the Strava API.
 
-    Args:
-        token (str): Access token for Strava API.
+#     Args:
+#         token (str): Access token for Strava API.
 
-    Returns:
-        tuple: A tuple containing a list of activities and a status code.
-               - If successful, returns a list of activity data and status code 200.
-               - If there's an error, returns the error response and its status code.
-    """
-    payload = {}
+#     Returns:
+#         tuple: A tuple containing a list of activities and a status code.
+#                - If successful, returns a list of activity data and status code 200.
+#                - If there's an error, returns the error response and its status code.
+#     """
+#     payload = {}
+#     headers = {"Authorization": f"Bearer {token}"}
+#     activities = []
+#     per_page = 200
+#     required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
+
+#     # Iterate through a maximum of 10 pages, which is 2000 activities (suppose to applied to most users)
+#     for page_num in range(1, 10):
+#         print(f"Page: {page_num}")
+#         # Make a GET request to fetch activities
+#         response = requests.request(
+#             "GET",
+#             f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}",
+#             headers=headers,
+#             data=payload,
+#             timeout=5,
+#         )
+#         if response.status_code != 200:
+#             return response.json(), response.status_code
+
+#         result = response.json()
+
+#         if isinstance(result, list) and len(result) > 0:
+#             for activity in result:
+#                 selected_data = {col: activity[col] for col in required_columns}
+#                 activities.append(selected_data)
+#             # Break the loop if all data has been fetched
+#             if len(result) < per_page:
+#                 break
+#         else:
+#             break
+
+#     return activities, 200
+
+
+async def fetch_activity_page(session, token, page_num, per_page):
+    url = (
+        f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}"
+    )
     headers = {"Authorization": f"Bearer {token}"}
-    activities = []
+
+    async with session.get(url, headers=headers) as response:
+        if response.status == 200:
+            return await response.json()
+        else:
+            return {"error": await response.text()}, response.status
+
+
+async def get_all_activities(token):
+    payload = {}
     per_page = 200
     required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
 
-    # Iterate through a maximum of 10 pages, which is 2000 activities (suppose to applied to most users)
-    for page_num in range(1, 10):
-        print(f"Page: {page_num}")
-        # Make a GET request to fetch activities
-        response = requests.request(
-            "GET",
-            f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}",
-            headers=headers,
-            data=payload,
-            timeout=5,
-        )
-        if response.status_code != 200:
-            return response.json(), response.status_code
+    activities = []
+    tasks = []
 
-        result = response.json()
+    async with aiohttp.ClientSession() as session:
+        for page_num in range(1, 5):
+            print(f"Page: {page_num}")
+            task = fetch_activity_page(session, token, page_num, per_page)
+            tasks.append(task)
 
+        # Gather all tasks concurrently
+        responses = await asyncio.gather(*tasks)
+
+    for result in responses:
         if isinstance(result, list) and len(result) > 0:
             for activity in result:
                 selected_data = {col: activity[col] for col in required_columns}
@@ -57,7 +104,7 @@ def get_all_activities(token):
             if len(result) < per_page:
                 break
         else:
-            break
+            return result, 500  # Adjust the status code as needed
 
     return activities, 200
 
@@ -204,6 +251,50 @@ def plot_calendar(daily_summary, theme="Reds"):
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
             image_dict[cur_theme] = encoded_img
+
+    return image_dict
+
+
+def plot_calendar_parallel(daily_summary, theme="Reds"):
+    c_map = {
+        "Reds": "Reds",
+        "BuGn": "BuGn",
+        "Greens": "Greens",
+        "Blues": "Blues",
+        "PuBu": "PuBu",
+        "RdPu": "RdPu",
+        "twilight": "twilight",
+    }
+
+    theme_to_process = (
+        list(c_map.keys())
+        if theme == "All"
+        else [theme]
+        if theme in c_map
+        else ["Reds"]
+    )
+
+    image_dict = {}
+
+    def generate_heatmap(cur_theme):
+        fig, _ = calplot.calplot(
+            daily_summary.iloc[:, 0],
+            cmap=cur_theme,
+            linewidth=1,
+            linecolor="white",
+            edgecolor=None,
+            yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
+        )
+
+        with io.BytesIO() as buffer:
+            fig.savefig(buffer, bbox_inches="tight", dpi=150, format="png")
+            buffer.seek(0)
+            encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
+            image_dict[cur_theme] = encoded_img
+
+    # Using ThreadPoolExecutor to parallelize heatmap generation
+    with concurrent.futures.ThreadPoolExecutor() as executor:
+        executor.map(generate_heatmap, theme_to_process)
 
     return image_dict
 

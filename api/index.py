@@ -23,6 +23,7 @@ from utils.utils import (
     request_token,
     refresh_access_token_if_expired,
     get_last_activity_id,
+    plot_calendar_parallel,
 )
 
 # some Flask specific configs
@@ -72,7 +73,7 @@ def generate_user_id():
 # Ref: stackoverflow flask-cache-memoize-url-query-string-parameters-as-well
 @app.route("/calendar", methods=["GET"])
 @cache.cached(query_string=True)
-def get_activity_calendar():
+async def get_activity_calendar():
     start = time.time()
     uid = request.args.get("uid")
     print(uid)
@@ -122,14 +123,19 @@ def get_activity_calendar():
         print("Return cache")
         new_image_src = user[cache_key]
     else:
-        activities, status_code = get_all_activities(access_token)
+        activities, status_code = await get_all_activities(access_token)
 
         if status_code == 200 and len(activities) > 0:
             daily_summary = summarize_activity(
                 activities, sport_type=sport_type.split(",") if sport_type else None
             )
 
-            new_image_src = plot_calendar(
+            # new_image_src = plot_calendar(
+            #     daily_summary,
+            #     # theme="All",
+            #     theme=theme,
+            # )
+            new_image_src = plot_calendar_parallel(
                 daily_summary,
                 # theme="All",
                 theme=theme,
