@@ -13,3 +13,4 @@ pylint==3.0.3
 calplot==0.1.7.5
 calmap==0.0.11
 aiohttp==3.8.6
+aioflask==0.4.0
