@@ -192,7 +192,8 @@ def plot_calendar(daily_summary, theme="Reds"):
 
         # Encode the generated image to base64 and store it in 'image_dict'
         with io.BytesIO() as buffer:
-            fig.savefig(buffer, bbox_inches="tight", dpi=150, format="png")
+            # fig.savefig(buffer, bbox_inches="tight", dpi=150, format="png")
+            fig.savefig(buffer, bbox_inches="tight", format="png")
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
             image_dict[cur_theme] = encoded_img
