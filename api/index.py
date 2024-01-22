@@ -9,7 +9,7 @@ from quart import Quart, request, jsonify, Response
 
 # from flask import Flask, request, jsonify, Response
 from quart_cors import cors
-from uvicorn import run
+from mangum import Mangum
 
 from dotenv import load_dotenv
 
@@ -28,7 +28,7 @@ from utils.utils import (
 
 
 app = Quart(__name__)
-# app = cors(app, allow_origin="*")
+app = cors(app, allow_origin="*")
 
 load_dotenv()
 env = os.environ
@@ -147,5 +147,4 @@ async def get_activity_calendar():
     return new_image_src
 
 
-if __name__ == "__main__":
-    run(app)
+handler = Mangum(app)  # optionally set debug=True
