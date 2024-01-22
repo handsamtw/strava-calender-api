@@ -9,6 +9,7 @@ from quart import Quart, request, jsonify, Response
 
 # from flask import Flask, request, jsonify, Response
 from quart_cors import cors
+from uvicorn import run
 
 from dotenv import load_dotenv
 
@@ -141,11 +142,10 @@ async def get_activity_calendar():
 
         # Set the appropriate content type for the response
         response = Response(image_data, mimetype="image/png")
-
         return response
 
     return new_image_src
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    run(app)
