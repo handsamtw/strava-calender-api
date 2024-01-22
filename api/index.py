@@ -5,12 +5,11 @@ from base64 import b64decode
 from pymongo import MongoClient
 
 from bson import ObjectId
-from aioflask import Flask, request, jsonify, Response
+from quart import Quart, request, jsonify, Response
 
 # from flask import Flask, request, jsonify, Response
 from flask_cors import CORS
-from flask_caching import Cache
-
+from quart_cors import cors
 
 from dotenv import load_dotenv
 
@@ -25,25 +24,17 @@ from utils.utils import (
     request_token,
     refresh_access_token_if_expired,
     get_last_activity_id,
-    plot_calendar_parallel,
+    # plot_calendar_parallel,
 )
 
-# some Flask specific configs
-config = {
-    "DEBUG": True,
-    "CACHE_TYPE": "SimpleCache",
-    "CACHE_DEFAULT_TIMEOUT": 120,
-    "CORS_HEADERS": "Content-Type",
-}
-app = Flask(__name__)
-# tell Flask to use the above defined config
-app.config.from_mapping(config)
 
-CORS(app)
+app = Quart(__name__)
+app = cors(app)
+# CORS(app)
 
 load_dotenv()
 env = os.environ
-cache = Cache(app)
+
 
 mongopass = env.get("MONGODB_PASSWORD")
 
@@ -74,7 +65,6 @@ def generate_user_id():
 
 # Ref: stackoverflow flask-cache-memoize-url-query-string-parameters-as-well
 @app.route("/calendar", methods=["GET"])
-@cache.cached(query_string=True)
 async def get_activity_calendar():
     start = time.time()
     uid = request.args.get("uid")
@@ -132,16 +122,8 @@ async def get_activity_calendar():
                 activities, sport_type=sport_type.split(",") if sport_type else None
             )
 
-            # new_image_src = plot_calendar(
-            #     daily_summary,
-            #     # theme="All",
-            #     theme=theme,
-            # )
-            new_image_src = plot_calendar_parallel(
-                daily_summary,
-                # theme="All",
-                theme=theme,
-            )
+            new_image_src = plot_calendar(daily_summary, theme="All")
+
             users_collection.update_one(
                 {"_id": ObjectId(uid)},
                 {
@@ -154,6 +136,7 @@ async def get_activity_calendar():
         else:
             error_message = {"error": "No activity found in this account"}
             return jsonify(error_message), 404
+
     print("Run time:", time.time() - start)
     if as_image and as_image.lower() == "true":
         # Decode the base64 string to bytes

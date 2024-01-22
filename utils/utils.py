@@ -6,14 +6,11 @@ from datetime import datetime, timedelta
 import requests
 import numpy as np
 import pandas as pd
-import calmap
 import calplot
 import concurrent.futures
-import aiohttp
-import asyncio
-
 import matplotlib as mpl
-
+import httpx
+import asyncio
 
 mpl.use("agg")
 
@@ -65,48 +62,35 @@ mpl.use("agg")
 #     return activities, 200
 
 
-async def fetch_activity_page(session, token, page_num, per_page):
-    url = (
-        f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}"
-    )
-    headers = {"Authorization": f"Bearer {token}"}
-
-    async with session.get(url, headers=headers) as response:
-        if response.status == 200:
-            return await response.json()
-        else:
-            return {"error": await response.text()}, response.status
-
-
 async def get_all_activities(token):
-    payload = {}
-    per_page = 200
+    async def _fetch_activities(page_num):
+        url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
+
+        async with httpx.AsyncClient(headers=headers) as client:
+            response = await client.get(url)
+            if response.status_code == 200:
+                activities = response.json()
+                filtered_activities = [
+                    {col: activity[col] for col in required_columns}
+                    for activity in activities
+                ]
+                return filtered_activities
+                # return response.json()
+            else:
+                return None  # Handle error cases based on your requirements
+
+    headers = {"Authorization": f"Bearer {token}"}
     required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
 
-    activities = []
-    tasks = []
+    tasks = [_fetch_activities(page_num) for page_num in range(1, 5)]
 
-    async with aiohttp.ClientSession() as session:
-        for page_num in range(1, 5):
-            print(f"Page: {page_num}")
-            task = fetch_activity_page(session, token, page_num, per_page)
-            tasks.append(task)
+    filtered_activities = await asyncio.gather(*tasks)
+    result_list = []
+    for filtered_activity in filtered_activities:
+        if filtered_activity is not None:
+            result_list.extend(filtered_activity)
 
-        # Gather all tasks concurrently
-        responses = await asyncio.gather(*tasks)
-
-    for result in responses:
-        if isinstance(result, list) and len(result) > 0:
-            for activity in result:
-                selected_data = {col: activity[col] for col in required_columns}
-                activities.append(selected_data)
-            # Break the loop if all data has been fetched
-            if len(result) < per_page:
-                break
-        else:
-            return result, 500  # Adjust the status code as needed
-
-    return activities, 200
+    return result_list, 200
 
 
 def summarize_activity(activities, sport_type=None):
@@ -189,7 +173,23 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary
 
 
-def plot_calendar(daily_summary, theme="Reds"):
+def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
+    def generate_heatmap(cur_theme):
+        fig, _ = calplot.calplot(
+            daily_summary.iloc[:, 0],
+            cmap=cur_theme,
+            linewidth=1,
+            linecolor="white",
+            edgecolor=None,
+            yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
+        )
+
+        with io.BytesIO() as buffer:
+            fig.savefig(buffer, bbox_inches="tight", dpi=150, format="png")
+            buffer.seek(0)
+            encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
+            image_dict[cur_theme] = encoded_img
+
     """
     Plots a calendar heatmap based on the daily summary data.
 
@@ -227,74 +227,13 @@ def plot_calendar(daily_summary, theme="Reds"):
     image_dict = {}
 
     # Generate calendar heatmap for each theme in 'theme_to_process'
-    for cur_theme in theme_to_process:
-        fig, _ = calplot.calplot(
-            daily_summary.iloc[:, 0],
-            cmap=cur_theme,
-            linewidth=1,
-            linecolor="white",
-            edgecolor=None,
-            yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
-        )
-        # fig, _ = calmap.calendarplot(
-        #     daily_summary.iloc[:, 0],
-        #     cmap=cur_theme,
-        #     linewidth=1,
-        #     linecolor="white",
-        #     edgecolor=None,
-        # )
-
-        # Encode the generated image to base64 and store it in 'image_dict'
-        with io.BytesIO() as buffer:
-            # fig.savefig(buffer, bbox_inches="tight", dpi=150, format="png")
-            fig.savefig(buffer, bbox_inches="tight", format="png")
-            buffer.seek(0)
-            encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
-            image_dict[cur_theme] = encoded_img
-
-    return image_dict
-
-
-def plot_calendar_parallel(daily_summary, theme="Reds"):
-    c_map = {
-        "Reds": "Reds",
-        "BuGn": "BuGn",
-        "Greens": "Greens",
-        "Blues": "Blues",
-        "PuBu": "PuBu",
-        "RdPu": "RdPu",
-        "twilight": "twilight",
-    }
-
-    theme_to_process = (
-        list(c_map.keys())
-        if theme == "All"
-        else [theme]
-        if theme in c_map
-        else ["Reds"]
-    )
-
-    image_dict = {}
-
-    def generate_heatmap(cur_theme):
-        fig, _ = calplot.calplot(
-            daily_summary.iloc[:, 0],
-            cmap=cur_theme,
-            linewidth=1,
-            linecolor="white",
-            edgecolor=None,
-            yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
-        )
-
-        with io.BytesIO() as buffer:
-            fig.savefig(buffer, bbox_inches="tight", dpi=150, format="png")
-            buffer.seek(0)
-            encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
-            image_dict[cur_theme] = encoded_img
-
-    # Using ThreadPoolExecutor to parallelize heatmap generation
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        executor.map(generate_heatmap, theme_to_process)
+    if is_parallel:
+        # Using ThreadPoolExecutor to parallelize heatmap generation
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(generate_heatmap, theme_to_process)
+    else:
+        for theme in theme_to_process:
+            generate_heatmap(theme)
 
     return image_dict
 
