@@ -27,7 +27,7 @@ from utils.utils import (
 
 
 app = Quart(__name__)
-app = cors(app)
+app = cors(app, allow_origin="*")
 
 load_dotenv()
 env = os.environ
