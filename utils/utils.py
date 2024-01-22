@@ -15,54 +15,19 @@ import asyncio
 mpl.use("agg")
 
 
-# def get_all_activities(token):
-#     """
-#     Retrieves all activities using the provided token from the Strava API.
-
-#     Args:
-#         token (str): Access token for Strava API.
-
-#     Returns:
-#         tuple: A tuple containing a list of activities and a status code.
-#                - If successful, returns a list of activity data and status code 200.
-#                - If there's an error, returns the error response and its status code.
-#     """
-#     payload = {}
-#     headers = {"Authorization": f"Bearer {token}"}
-#     activities = []
-#     per_page = 200
-#     required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
-
-#     # Iterate through a maximum of 10 pages, which is 2000 activities (suppose to applied to most users)
-#     for page_num in range(1, 10):
-#         print(f"Page: {page_num}")
-#         # Make a GET request to fetch activities
-#         response = requests.request(
-#             "GET",
-#             f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}",
-#             headers=headers,
-#             data=payload,
-#             timeout=5,
-#         )
-#         if response.status_code != 200:
-#             return response.json(), response.status_code
-
-#         result = response.json()
-
-#         if isinstance(result, list) and len(result) > 0:
-#             for activity in result:
-#                 selected_data = {col: activity[col] for col in required_columns}
-#                 activities.append(selected_data)
-#             # Break the loop if all data has been fetched
-#             if len(result) < per_page:
-#                 break
-#         else:
-#             break
-
-#     return activities, 200
-
-
 async def get_all_activities(token):
+    """
+    Retrieves all activities using the provided token from the Strava API.
+
+    Args:
+        token (str): Access token for Strava API.
+
+    Returns:
+        tuple: A tuple containing a list of activities and a status code.
+               - If successful, returns a list of activity data and status code 200.
+               - If there's an error, returns the error response and its status code.
+    """
+
     async def _fetch_activities(page_num):
         url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
 

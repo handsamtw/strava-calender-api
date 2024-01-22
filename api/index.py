@@ -8,7 +8,6 @@ from bson import ObjectId
 from quart import Quart, request, jsonify, Response
 
 # from flask import Flask, request, jsonify, Response
-from flask_cors import CORS
 from quart_cors import cors
 
 from dotenv import load_dotenv
@@ -24,13 +23,11 @@ from utils.utils import (
     request_token,
     refresh_access_token_if_expired,
     get_last_activity_id,
-    # plot_calendar_parallel,
 )
 
 
 app = Quart(__name__)
 app = cors(app)
-# CORS(app)
 
 load_dotenv()
 env = os.environ
