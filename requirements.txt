@@ -11,4 +11,4 @@ calplot==0.1.7.5
 quart==0.19.4
 quart-cors==0.7.0
 httpx==0.26.0
-Mangum==0.17.0
+mangum==0.17.0
