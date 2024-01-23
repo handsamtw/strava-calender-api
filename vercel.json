@@ -1,5 +1,11 @@
 {
       "rewrites": [
         { "source": "/(.*)", "destination": "/api/index" }
-      ]
+      ],
+      
+      "functions": {
+        "api/index": {
+          "maxDuration": 60
+        }
+      }
 }
