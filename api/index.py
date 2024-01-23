@@ -7,6 +7,7 @@ from pymongo import MongoClient
 
 from bson import ObjectId
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
 
@@ -42,6 +43,20 @@ db = client["strava-calendar"]
 users_collection = db["users"]
 
 app = FastAPI()
+# Define CORS settings
+origins = [
+    "http://127.0.0.1:4200",  
+    "https://strava-calender.vercel.app",
+]
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all HTTP headers
+)
 @app.get("/")
 async def root():
     return {"message": "Hello world!"}
