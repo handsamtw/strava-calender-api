@@ -6,16 +6,16 @@ from datetime import datetime, timedelta
 import requests
 import numpy as np
 import pandas as pd
-
 import calplot
-
+import concurrent.futures
 import matplotlib as mpl
-
+import httpx
+import asyncio
 
 mpl.use("agg")
 
 
-def get_all_activities(token):
+async def get_all_activities(token):
     """
     Retrieves all activities using the provided token from the Strava API.
 
@@ -27,39 +27,36 @@ def get_all_activities(token):
                - If successful, returns a list of activity data and status code 200.
                - If there's an error, returns the error response and its status code.
     """
-    payload = {}
+
+    async def _fetch_activities(page_num):
+        print("Page num: ", page_num)
+        url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
+
+        async with httpx.AsyncClient(headers=headers) as client:
+            response = await client.get(url)
+            if response.status_code == 200:
+                activities = response.json()
+                filtered_activities = [
+                    {col: activity[col] for col in required_columns}
+                    for activity in activities
+                ]
+                return filtered_activities
+                # return response.json()
+            else:
+                return None  # Handle error cases based on your requirements
+
     headers = {"Authorization": f"Bearer {token}"}
-    activities = []
-    per_page = 200
     required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
 
-    # Iterate through a maximum of 10 pages, which is 2000 activities (suppose to applied to most users)
-    for page_num in range(1, 10):
-        print(f"Page: {page_num}")
-        # Make a GET request to fetch activities
-        response = requests.request(
-            "GET",
-            f"https://www.strava.com/api/v3/activities?page={page_num}&per_page={per_page}",
-            headers=headers,
-            data=payload,
-            timeout=1000,
-        )
-        if response.status_code != 200:
-            return response.json(), response.status_code
+    tasks = [_fetch_activities(page_num) for page_num in range(1, 5)]
 
-        result = response.json()
-
-        if isinstance(result, list) and len(result) > 0:
-            for activity in result:
-                selected_data = {col: activity[col] for col in required_columns}
-                activities.append(selected_data)
-            # Break the loop if all data has been fetched
-            if len(result) < per_page:
-                break
-        else:
-            break
-
-    return activities, 200
+    filtered_activities = await asyncio.gather(*tasks)
+    result_list = []
+    for filtered_activity in filtered_activities:
+        if filtered_activity is not None:
+            result_list.extend(filtered_activity)
+    print("Total activity:", len(result_list))
+    return result_list, 200
 
 
 def summarize_activity(activities, sport_type=None):
@@ -142,7 +139,23 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary
 
 
-def plot_calendar(daily_summary, theme="Reds"):
+def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
+    def generate_heatmap(cur_theme):
+        fig, _ = calplot.calplot(
+            daily_summary.iloc[:, 0],
+            cmap=cur_theme,
+            linewidth=1,
+            linecolor="white",
+            edgecolor=None,
+            yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
+        )
+
+        with io.BytesIO() as buffer:
+            fig.savefig(buffer, bbox_inches="tight", dpi=150, format="png")
+            buffer.seek(0)
+            encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
+            image_dict[cur_theme] = encoded_img
+
     """
     Plots a calendar heatmap based on the daily summary data.
 
@@ -180,22 +193,13 @@ def plot_calendar(daily_summary, theme="Reds"):
     image_dict = {}
 
     # Generate calendar heatmap for each theme in 'theme_to_process'
-    for cur_theme in theme_to_process:
-        fig, _ = calplot.calplot(
-            daily_summary.iloc[:, 0],
-            cmap=cur_theme,
-            linewidth=1,
-            linecolor="white",
-            edgecolor=None,
-            yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
-        )
-
-        # Encode the generated image to base64 and store it in 'image_dict'
-        with io.BytesIO() as buffer:
-            fig.savefig(buffer, bbox_inches="tight", dpi=400, format="png")
-            buffer.seek(0)
-            encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
-            image_dict[cur_theme] = encoded_img
+    if is_parallel:
+        # Using ThreadPoolExecutor to parallelize heatmap generation
+        with concurrent.futures.ThreadPoolExecutor() as executor:
+            executor.map(generate_heatmap, theme_to_process)
+    else:
+        for theme in theme_to_process:
+            generate_heatmap(theme)
 
     return image_dict
 
@@ -219,7 +223,7 @@ def refresh_access_token_if_expired(user):
             "grant_type": "refresh_token",
             "refresh_token": user["refresh_token"],
         }
-        response = requests.post(refresh_token_url, data=refresh_data, timeout=1000)
+        response = requests.post(refresh_token_url, data=refresh_data, timeout=5)
 
         return response.json(), response.status_code
 
@@ -282,7 +286,7 @@ def request_token(code):
         "grant_type": "authorization_code",
     }
 
-    response = requests.request("POST", url, data=payload, timeout=1000)
+    response = requests.request("POST", url, data=payload, timeout=5)
     if response.status_code == 200:
         data = response.json()
         return {
@@ -308,7 +312,7 @@ def get_last_activity_id(access_token):
     url = "https://www.strava.com/api/v3/activities?per_page=1&page=1"
     headers = {"Authorization": f"Bearer {access_token}"}
 
-    response = requests.get(url, headers=headers, timeout=3)
+    response = requests.get(url, headers=headers, timeout=5)
 
     if response.status_code == 200:
         data = response.json()

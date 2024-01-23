@@ -86,10 +86,6 @@ To setup up locally devloping environment of this backend API, here is the todo 
 - [ ] Add .env file to the root directory
 - [ ] Run locally and make a curl request
 
-### Install Python dependencies
-
-cd to project's root directory, and run `pip install`
-
 ### Setup MongoDB Atlas
 
 1. Login to your MongoDB Atlass portal
@@ -127,6 +123,19 @@ Click [My API application](https://www.strava.com/settings/api) at the last tab 
 The .env.example serves as a template for developers to understand the required environment variables without exposing any sensitive data.
 
 Replace ACCESS_TOKEN, REFRESH_TOKEN, and MONGODB_PASSWORD in .env.example file to your own credential. Then run `mv .env.example .env` to rename the file
+
+### How to run the API endpoint locally
+
+1. Virtual environment setup
+
+- cd to project's root directory
+- Run `python3.9 -m venv .venv` to create virtual environment
+- Run `source .venv/bin/activate` to activate virtual environment
+- Run `which python` to check the path is under .venv folder
+- Run `python3 -m pip install --upgrade pip` to upgrade pip
+
+2. Run `python3 -m pip install -r requirements.txt` to install Python dependencies
+3. Run `hypercorn api/index.py` and visit `http://127.0.0.1:8000` to check API run successfully on you device
 
 ## How to Contribute
 
