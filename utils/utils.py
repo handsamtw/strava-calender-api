@@ -29,6 +29,7 @@ async def get_all_activities(token):
     """
 
     async def _fetch_activities(page_num):
+        print("Page num: ", page_num)
         url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
 
         async with httpx.AsyncClient(headers=headers) as client:
@@ -54,7 +55,7 @@ async def get_all_activities(token):
     for filtered_activity in filtered_activities:
         if filtered_activity is not None:
             result_list.extend(filtered_activity)
-
+    print("Total activity:", len(result_list))
     return result_list, 200
 
 
