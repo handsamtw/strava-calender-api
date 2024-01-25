@@ -128,6 +128,13 @@ def summarize_activity(activities, sport_type=None):
 
     # Group by date and calculate the sum for each day
     daily_summary = df.resample("D").agg({eval_metric: "sum"})
+    df_activity_count = df.groupby(df.index.year).size().rename('count')
+    df_distance_per_year = (daily_summary.groupby(daily_summary.index.year)['distance'].sum() / 1000).round(1)
+    stat_summary = pd.concat([df_activity_count, 
+                            df_distance_per_year], 
+                            axis=1).reset_index()
+    stat_summary.columns = ["year", 'count', 'distance']
+    
 
     # Clip outliers in the distance values for visualization clarity
     outlier_std = 3
@@ -136,7 +143,7 @@ def summarize_activity(activities, sport_type=None):
         + outlier_std * np.std(daily_summary[eval_metric])
     )
     daily_summary[eval_metric].clip(0, max_val, inplace=True)
-    return daily_summary
+    return daily_summary, stat_summary.to_dict(orient='records')
 
 
 def plot_calendar(daily_summary, theme="Reds", is_parallel=True):

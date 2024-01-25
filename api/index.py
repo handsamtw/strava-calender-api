@@ -80,7 +80,7 @@ def generate_user_id(code: str):
     return JSONResponse(content=error_message), 400
 
 
-# Ref: stackoverflow flask-cache-memoize-url-query-string-parameters-as-well
+
 @app.get("/calendar")
 async def get_activity_calendar(uid, sport_type, theme='All', as_image=False):
     start = time.time()
@@ -126,14 +126,15 @@ async def get_activity_calendar(uid, sport_type, theme='All', as_image=False):
     ):
         print("Return cache")
         new_image_src = user[cache_key]
+        stat_summary = user["stat_summary"]
     else:
         activities, status_code = await get_all_activities(access_token)
 
         if status_code == 200 and len(activities) > 0:
-            daily_summary = summarize_activity(
+            daily_summary, stat_summary = summarize_activity(
                 activities, sport_type=sport_type.split(",") if sport_type else None
             )
-
+            print(stat_summary)
             new_image_src = plot_calendar(daily_summary, theme="All")
 
             users_collection.update_one(
@@ -142,6 +143,7 @@ async def get_activity_calendar(uid, sport_type, theme='All', as_image=False):
                     "$set": {
                         cache_key: new_image_src,
                         "last_activity_id": last_activity_id,
+                        "stat_summary": stat_summary
                     }
                 },
             )
@@ -159,7 +161,7 @@ async def get_activity_calendar(uid, sport_type, theme='All', as_image=False):
         response = StreamingResponse(io.BytesIO(image_data), media_type="image/png")
         return response
 
-    return new_image_src
+    return {"image":new_image_src, "stat":stat_summary}
 
 
 # handler = Mangum(app)  # optionally set debug=True
