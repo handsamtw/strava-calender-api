@@ -11,3 +11,4 @@ fastapi==0.103.1
 hypercorn==0.14.4
 gunicorn==21.2.0
 httptools==0.6.1
+cachetools==5.3.2
