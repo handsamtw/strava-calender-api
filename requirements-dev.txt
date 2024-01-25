@@ -4,6 +4,7 @@ numpy==1.23.5
 matplotlib==3.8.2
 requests==2.31.0
 python-dotenv==1.0.0
+pylint==3.0.3
 calplot==0.1.7.5
 httpx==0.26.0
 fastapi==0.103.1

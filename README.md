@@ -134,7 +134,7 @@ Replace ACCESS_TOKEN, REFRESH_TOKEN, and MONGODB_PASSWORD in .env.example file t
 - Run `which python` to check the path is under .venv folder
 - Run `python3 -m pip install --upgrade pip` to upgrade pip
 
-2. Run `python3 -m pip install -r requirements.txt` to install Python dependencies
+2. Run `python3 -m pip install -r requirements-dev.txt` to install Python dependencies
 3. Run `hypercorn api/index.py` and visit `http://127.0.0.1:8000` to check API run successfully on you device
 
 ## How to Contribute

@@ -125,8 +125,8 @@ async def get_activity_calendar(uid, sport_type, theme='All', as_image=False):
         and cache_key in user
     ):
         print("Return cache")
-        new_image_src = user[cache_key]
-        stat_summary = user["stat_summary"]
+        new_image_src = user[cache_key]["image_src"]
+        stat_summary = user[cache_key]["stat"]
     else:
         activities, status_code = await get_all_activities(access_token)
 
@@ -134,7 +134,6 @@ async def get_activity_calendar(uid, sport_type, theme='All', as_image=False):
             daily_summary, stat_summary = summarize_activity(
                 activities, sport_type=sport_type.split(",") if sport_type else None
             )
-            print(stat_summary)
             #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
             new_image_src = plot_calendar(daily_summary, theme="All", is_parallel=False)
 
@@ -142,9 +141,10 @@ async def get_activity_calendar(uid, sport_type, theme='All', as_image=False):
                 {"_id": ObjectId(uid)},
                 {
                     "$set": {
-                        cache_key: new_image_src,
                         "last_activity_id": last_activity_id,
-                        "stat_summary": stat_summary
+                        cache_key: {"image_src":new_image_src,
+                                    "stat": stat_summary
+                                    }   
                     }
                 },
             )
