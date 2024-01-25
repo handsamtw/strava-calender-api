@@ -180,7 +180,7 @@ def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
     # Initialize a color map dictionary for different themes
     c_map = {
         "Reds": "Reds",
-        "BuGn": "BuGn",
+        "YlGn": "YlGn",
         "Greens": "Greens",
         "Blues": "Blues",
         "PuBu": "PuBu",
