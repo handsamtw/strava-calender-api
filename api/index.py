@@ -6,7 +6,7 @@ from base64 import b64decode
 from pymongo import MongoClient
 
 from bson import ObjectId
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
@@ -60,6 +60,8 @@ app.add_middleware(
 @app.get("/")
 async def root():
     return {"message": "Hello world!"}
+
+
 
 
 @app.get("/uid")
@@ -165,4 +167,14 @@ async def get_activity_calendar(uid, sport_type, theme='All', as_image=False):
     return {"image":new_image_src, "stat":stat_summary}
 
 
-# handler = Mangum(app)  # optionally set debug=True
+@app.get("/check_valid_uid")
+def check_valid_uid(uid: str):
+    if ObjectId.is_valid(uid):
+        user = users_collection.find_one({"_id": ObjectId(uid)})
+        
+        if not user or "access_token" not in user:
+                return {"is_valid": False}
+
+        return {"is_valid": True}
+    
+    return {"is_valid": False}
