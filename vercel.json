@@ -10,10 +10,15 @@
           "excludeFiles": "{.next,*.cache,node_modules,public,app}/**"
         }
       },
-      "routes": [
+      "headers": [
         {
-          "src": "api/*",
-          "headers": { "Cache-Control": "max-age=60" } 
+          "source": "/about.js",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "s-maxage=1, stale-while-revalidate=59"
+            }
+          ]
         }
       ]
 
