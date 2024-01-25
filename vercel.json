@@ -12,7 +12,7 @@
       },
       "headers": [
         {
-          "source": "/about.js",
+          "source": "api/**",
           "headers": [
             {
               "key": "Cache-Control",
