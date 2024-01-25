@@ -148,6 +148,7 @@ def summarize_activity(activities, sport_type=None):
 
 def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
     def generate_heatmap(cur_theme):
+        
         fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0],
             cmap=cur_theme,
@@ -156,9 +157,8 @@ def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
             edgecolor=None,
             yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
         )
-
         with io.BytesIO() as buffer:
-            fig.savefig(buffer, bbox_inches="tight", dpi=150, format="png")
+            fig.savefig(buffer, bbox_inches="tight", dpi=200, format="png")
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
             image_dict[cur_theme] = encoded_img
@@ -180,7 +180,7 @@ def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
     # Initialize a color map dictionary for different themes
     c_map = {
         "Reds": "Reds",
-        "BuGn": "BuGn",
+        "YlGn": "YlGn",
         "Greens": "Greens",
         "Blues": "Blues",
         "PuBu": "PuBu",

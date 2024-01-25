@@ -135,7 +135,8 @@ async def get_activity_calendar(uid, sport_type, theme='All', as_image=False):
                 activities, sport_type=sport_type.split(",") if sport_type else None
             )
             print(stat_summary)
-            new_image_src = plot_calendar(daily_summary, theme="All")
+            #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
+            new_image_src = plot_calendar(daily_summary, theme="All", is_parallel=False)
 
             users_collection.update_one(
                 {"_id": ObjectId(uid)},
