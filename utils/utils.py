@@ -9,6 +9,8 @@ import pandas as pd
 import calplot
 import concurrent.futures
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+
 import httpx
 import asyncio
 
@@ -148,7 +150,6 @@ def summarize_activity(activities, sport_type=None):
 
 def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
     def generate_heatmap(cur_theme):
-        
         fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0],
             cmap=cur_theme,
@@ -162,6 +163,7 @@ def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
             image_dict[cur_theme] = encoded_img
+        plt.close()
 
     """
     Plots a calendar heatmap based on the daily summary data.
