@@ -102,7 +102,7 @@ def summarize_activity(activities, sport_type=None):
             "workout": "Workout",
         }
 
-        sports_evl_by_time = ["yoga", "hiit", "weight training", "workout"]
+        sports_evl_by_time = ["Yoga", "HIIT", "Weight Training", "Workout"]
         eval_metric = "distance"
 
         if sport_type.lower() in available_sport_type:
@@ -119,20 +119,14 @@ def summarize_activity(activities, sport_type=None):
     # Group by date and calculate the sum for each day
     daily_summary = df.resample("D").agg({eval_metric: "sum"})
     df_activity_count = df.groupby(df.index.year).size().rename('count')
-    df_distance_per_year = (daily_summary.groupby(daily_summary.index.year)['distance'].sum() / 1000).round(1)
-    stat_summary = pd.concat([df_activity_count, 
-                            df_distance_per_year], 
-                            axis=1).reset_index()
-    stat_summary.columns = ["year", 'count', 'distance']
-    
 
-    # Clip outliers in the distance values for visualization clarity
-    outlier_std = 3
-    max_val = int(
-        np.mean(daily_summary[eval_metric])
-        + outlier_std * np.std(daily_summary[eval_metric])
-    )
-    daily_summary[eval_metric].clip(0, max_val, inplace=True)
+    stat_per_year = (daily_summary.groupby(daily_summary.index.year)[eval_metric].sum())
+    
+    stat_summary = pd.concat([df_activity_count, 
+                            stat_per_year], 
+                            axis=1).reset_index()
+    stat_summary.columns = ["year", 'count', eval_metric]
+    
     return daily_summary, stat_summary.to_dict(orient='records')
 
 
