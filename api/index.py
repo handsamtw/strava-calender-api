@@ -30,6 +30,7 @@ from utils.utils import (
     request_token,
     refresh_access_token_if_expired,
     get_last_activity_id,
+    get_user_name
 )
 
 
@@ -160,13 +161,13 @@ async def get_activity_calendar(
             stat_summary = user[cache_key]["stat"]
         else:
             activities, status_code = await get_all_activities(access_token)
-
+            username = get_user_name(access_token)
             if status_code == 200 and len(activities) > 0:
                 daily_summary, stat_summary = summarize_activity(
                     activities, sport_type=sport_type.split(",") if sport_type else None
                 )
                 #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
-                new_image_src = plot_calendar(daily_summary, theme="All", is_parallel=False)
+                new_image_src = plot_calendar(daily_summary, username=username, sport_type=sport_type, theme="All", is_parallel=False)
 
                 users_collection.update_one(
                     {"_id": ObjectId(uid)},
