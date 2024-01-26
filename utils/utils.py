@@ -57,7 +57,6 @@ async def get_all_activities(token):
     for filtered_activity in filtered_activities:
         if filtered_activity is not None:
             result_list.extend(filtered_activity)
-    print("Total activity:", len(result_list))
     return result_list, 200
 
 
@@ -117,6 +116,8 @@ def summarize_activity(activities, sport_type=None):
                 break
         if not loop_broken:
             df = df[df["type"].isin(filtered_sport_type)]
+    
+    print("Total activity:", df.shape[0])
     # If df is empty, create a DataFrame with zeros so users could still get an empty calendar
     if df.empty:
         return (
@@ -148,16 +149,21 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary, stat_summary.to_dict(orient='records')
 
 
-def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
+def plot_calendar(daily_summary, username, sport_type, theme="Reds", is_parallel=True):
     def generate_heatmap(cur_theme):
         fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0],
+            suptitle = suptitle,
+            suptitle_kws=suptitle_kws,
             cmap=cur_theme,
             linewidth=1,
             linecolor="white",
             edgecolor=None,
-            yearlabel_kws={"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"},
+            yearlabel_kws=yearlabel_kws
         )
+
+        text_to_add = "Power by @handsamtw - strava-calender.vercel.app"
+        fig.text(0, -0.05, text_to_add,color='#ababab', fontsize=12)
         with io.BytesIO() as buffer:
             fig.savefig(buffer, bbox_inches="tight", dpi=200, format="png")
             buffer.seek(0)
@@ -197,10 +203,13 @@ def plot_calendar(daily_summary, theme="Reds", is_parallel=True):
         if theme in c_map
         else ["Reds"]
     )
-
+    
+    suptitle = f"{username}'s {sport_type} on Strava" if username and sport_type else None
+    suptitle_kws = {"x":0.45, "y":1.07,"fontsize": 20, 'color': '#ababab'} if suptitle else None
+    yearlabel_kws = {"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"}
     # Initialize an empty dictionary to store encoded images
     image_dict = {}
-
+    
     # Generate calendar heatmap for each theme in 'theme_to_process'
     if is_parallel:
         # Using ThreadPoolExecutor to parallelize heatmap generation
@@ -330,7 +339,18 @@ def get_last_activity_id(access_token):
 
     return response.json(), response.status_code
 
+def get_user_name(access_token):
+    url = "https://www.strava.com/api/v3/athlete"
+    headers = {"Authorization": f"Bearer {access_token}"}
 
+    response = requests.get(url, headers=headers, timeout=5)
+    if response.status_code == 200:
+            data = response.json()
+            if data["username"]:
+                return data["username"]
+            return data["firstname"] + " " + data["lastname"]
+            
+    return ""
 # def html_to_activity_image(activity_id):
 #     output_path = "/tmp"
 #     hti = Html2Image(output_path=output_path)
