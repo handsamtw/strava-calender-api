@@ -103,31 +103,18 @@ def summarize_activity(activities, sport_type=None):
         }
 
         sports_evl_by_time = ["yoga", "hiit", "weight training", "workout"]
-        filtered_sport_type = []
-        loop_broken = False  # Flag to check if the loop breaks prematurely
         eval_metric = "distance"
-        for sport in sport_type:
-            if sport.lower() in available_sport_type:
-                filtered_sport_type.append(available_sport_type[sport.lower()])
-                if sport.lower() in sports_evl_by_time:
-                    eval_metric = "moving_time"
-            else:
-                loop_broken = True
-                break
-        if not loop_broken:
-            df = df[df["type"].isin(filtered_sport_type)]
+
+        if sport_type.lower() in available_sport_type:
+            filtered_sport_type = available_sport_type[sport_type.lower()]
+            if filtered_sport_type in sports_evl_by_time:
+                eval_metric = 'moving_time'
+            df = df[df["type"] == filtered_sport_type] 
     
     print("Total activity:", df.shape[0])
-    # If df is empty, create a DataFrame with zeros so users could still get an empty calendar
+    # If df is empty, return two empty dataframe
     if df.empty:
-        return (
-            pd.DataFrame(
-                {eval_metric: [0]},
-                index=pd.date_range(start=earliest_date, end=latest_date, freq="D"),
-            )
-            .resample("D")
-            .agg({eval_metric: "sum"})
-        )
+        return df, pd.DataFrame()
 
     # Group by date and calculate the sum for each day
     daily_summary = df.resample("D").agg({eval_metric: "sum"})

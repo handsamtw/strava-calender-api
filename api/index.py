@@ -6,7 +6,7 @@ from base64 import b64decode
 from pymongo import MongoClient
 
 from bson import ObjectId
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
@@ -161,11 +161,15 @@ async def get_activity_calendar(
             stat_summary = user[cache_key]["stat"]
         else:
             activities, status_code = await get_all_activities(access_token)
-            username = get_user_name(access_token)
+            
             if status_code == 200 and len(activities) > 0:
                 daily_summary, stat_summary = summarize_activity(
-                    activities, sport_type=sport_type.split(",") if sport_type else None
+                    activities, sport_type=sport_type
                 )
+                if daily_summary.empty:
+                    raise HTTPException(status_code=404, detail=f"No  {sport_type} activity found in your Strava")
+                    
+                username = get_user_name(access_token)
                 #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
                 new_image_src = plot_calendar(daily_summary, username=username, sport_type=sport_type, theme="All", is_parallel=False)
 
