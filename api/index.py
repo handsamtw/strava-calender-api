@@ -169,7 +169,8 @@ async def get_activity_calendar(
                 if daily_summary.empty:
                     raise HTTPException(status_code=404, detail=f"No  {sport_type} activity found in your Strava")
                     
-                username = get_user_name(access_token)
+                username = user.get("username", get_user_name(access_token))
+
                 #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
                 new_image_src = plot_calendar(daily_summary, username=username, sport_type=sport_type, theme="All", is_parallel=False)
 
@@ -180,7 +181,8 @@ async def get_activity_calendar(
                             "last_activity_id": last_activity_id,
                             cache_key: {"image_src":new_image_src,
                                         "stat": stat_summary
-                                        }   
+                                        },
+                            "username": username
                         }
                     },
                 )
