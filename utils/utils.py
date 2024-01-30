@@ -50,7 +50,13 @@ async def get_all_activities(token):
     headers = {"Authorization": f"Bearer {token}"}
     required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
 
-    tasks = [_fetch_activities(page_num) for page_num in range(1, 5)]
+    tasks = []
+    for page_num in range(1, 20):
+        activity = _fetch_activities(page_num)
+        if not activity:
+            break
+        tasks.append(activity)
+    
 
     filtered_activities = await asyncio.gather(*tasks)
     result_list = []
