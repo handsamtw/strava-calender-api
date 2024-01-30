@@ -332,10 +332,8 @@ def get_user_name(access_token):
 
     response = requests.get(url, headers=headers, timeout=5)
     if response.status_code == 200:
-            data = response.json()
-            if data["username"]:
-                return data["username"]
-            return data["firstname"] + " " + data["lastname"]
+        data = response.json()
+        return data["firstname"] + " " + data["lastname"]
             
     return ""
 # def html_to_activity_image(activity_id):
