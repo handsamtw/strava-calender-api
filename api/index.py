@@ -16,7 +16,7 @@ import hashlib
 
 
 response_cache = TTLCache(maxsize=256, ttl=60)
-activity_cache = TTLCache(maxsize=256, ttl=180)
+activity_cache = TTLCache(maxsize=256, ttl=600)
 
 from dotenv import load_dotenv
 
