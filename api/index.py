@@ -15,7 +15,8 @@ from fastapi import FastAPI, Depends, Request
 import hashlib
 
 
-cache = TTLCache(maxsize=256, ttl=60)
+response_cache = TTLCache(maxsize=256, ttl=60)
+activity_cache = TTLCache(maxsize=256, ttl=180)
 
 from dotenv import load_dotenv
 
@@ -64,8 +65,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all HTTP headers
 )
 # Dependency to use caching in your route
-def _get_cache():
-    return cache
+def _get_response_cache():
+    return response_cache
+
+# Dependency to use caching in your route
+def _get_activity_cache():
+    return activity_cache
+
 def _get_hashed_url(request: Request):
     # Use a hash function to generate the hash from the URL
     url = request.url._url
@@ -106,13 +112,14 @@ async def get_activity_calendar(
     theme='All',
     as_image=False,
     hashed_url_cache_key: str = Depends(_get_hashed_url),
-    cache: TTLCache = Depends(_get_cache)
+    response_cache: TTLCache = Depends(_get_response_cache),
+    activity_cache: TTLCache = Depends(_get_activity_cache),
 ):
     start = time.time()
-    cached_result = cache.get(hashed_url_cache_key)
     
-    if cached_result:
+    if hashed_url_cache_key in response_cache:
         print("Cache hit!")
+        cached_result = response_cache.get(hashed_url_cache_key)
         new_image_src, stat_summary = cached_result["image"], cached_result["stat"]
         
     else:
@@ -160,7 +167,8 @@ async def get_activity_calendar(
             new_image_src = user[cache_key]["image_src"]
             stat_summary = user[cache_key]["stat"]
         else:
-            activities, status_code = await get_all_activities(access_token)
+            activities, status_code = await get_all_activities(activity_cache, access_token)
+            
             if status_code == 200 and len(activities) > 0:
                 daily_summary, stat_summary = summarize_activity(
                     activities, sport_type=sport_type
@@ -192,7 +200,7 @@ async def get_activity_calendar(
     # Cache the result
     result = {"image":new_image_src, "stat":stat_summary}
     
-    cache[hashed_url_cache_key] = result
+    response_cache[hashed_url_cache_key] = result
     
     print("Run time:", round(time.time() - start, 3))
     if as_image and as_image.lower() == "true":
