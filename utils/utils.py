@@ -340,7 +340,7 @@ def request_token(code):
 
     return response.json(), response.status_code
 
-
+# Deprecated
 def get_last_activity_id(access_token):
     """
     Fetches the ID of the last activity using the provided Strava access token.

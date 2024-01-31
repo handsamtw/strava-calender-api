@@ -30,7 +30,6 @@ from utils.utils import (
     plot_calendar,
     request_token,
     refresh_access_token_if_expired,
-    get_last_activity_id,
     get_user_name
 )
 
@@ -156,11 +155,8 @@ async def get_activity_calendar(
 
         
         cache_key = f"{sport_type.lower()}-imageSrc"
-        last_activity_id, status_code = get_last_activity_id(access_token)
         if (
             status_code == 200
-            and "last_activity_id" in user
-            and user["last_activity_id"] == last_activity_id
             and cache_key in user
         ):
             print("No new activity found")
@@ -185,7 +181,6 @@ async def get_activity_calendar(
                     {"_id": ObjectId(uid)},
                     {
                         "$set": {
-                            "last_activity_id": last_activity_id,
                             cache_key: {"image_src":new_image_src,
                                         "stat": stat_summary
                                         },
