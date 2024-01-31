@@ -30,7 +30,7 @@ from utils.utils import (
     plot_calendar,
     request_token,
     refresh_access_token_if_expired,
-    get_user_name
+    get_user_name,
 )
 
 
@@ -154,7 +154,6 @@ async def get_activity_calendar(
             )
             access_token = refresh_token_response["access_token"]
 
-        
         
         
         activities, status_code = await get_all_activities(activity_cache, access_token)
