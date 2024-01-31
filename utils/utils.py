@@ -174,10 +174,18 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary, stat_summary.to_dict(orient='records')
 
 
-def plot_calendar(daily_summary, username, sport_type, theme="Reds", is_parallel=True):
+def plot_calendar(daily_summary, username, sport_type, unit="metric", theme="Reds", is_parallel=True):
     def generate_heatmap(cur_theme):
+
+        meter_to_unit_factor = 1609 if unit == "imperial" else 1000
+        if sport_type.lower() == 'swim':
+            meter_to_unit_factor = 0.914
+        if unit == "imperial":
+            unit_text = "unit: mi"
+        else:
+            unit_text = "unit: km"
         fig, _ = calplot.calplot(
-            daily_summary.iloc[:, 0],
+            daily_summary.iloc[:, 0] / meter_to_unit_factor,
             suptitle = suptitle,
             suptitle_kws=suptitle_kws,
             cmap=cur_theme,
@@ -186,9 +194,10 @@ def plot_calendar(daily_summary, username, sport_type, theme="Reds", is_parallel
             edgecolor=None,
             yearlabel_kws=yearlabel_kws
         )
-
-        text_to_add = "Power by @handsamtw - strava-calender.vercel.app"
-        fig.text(0, -0.05, text_to_add,color='#ababab', fontsize=12)
+        
+        poweredby_text = "Power by @handsamtw - strava-calender.vercel.app"
+        fig.text(0, -0.05, poweredby_text,color='#ababab', fontsize=12)
+        fig.text(0.83, -0.05, unit_text,color='#ababab', fontsize=10)
         with io.BytesIO() as buffer:
             fig.savefig(buffer, bbox_inches="tight", dpi=200, format="png")
             buffer.seek(0)
