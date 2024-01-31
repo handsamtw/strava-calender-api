@@ -154,43 +154,25 @@ async def get_activity_calendar(
             access_token = refresh_token_response["access_token"]
 
         
-        cache_key = f"{sport_type.lower()}-imageSrc"
-        if (
-            status_code == 200
-            and cache_key in user
-        ):
-            print("No new activity found")
-            new_image_src = user[cache_key]["image_src"]
-            stat_summary = user[cache_key]["stat"]
+        
+        
+        activities, status_code = await get_all_activities(activity_cache, access_token)
+        
+        if status_code == 200 and len(activities) > 0:
+            daily_summary, stat_summary = summarize_activity(
+                activities, sport_type=sport_type
+            )
+            if daily_summary.empty:
+                raise HTTPException(status_code=404, detail=f"No  {sport_type} activity found in your Strava")
+                
+            username = user.get("username", get_user_name(access_token))
+
+            #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
+            new_image_src = plot_calendar(daily_summary, username=username, sport_type=sport_type, theme="All", is_parallel=False)
+
         else:
-            activities, status_code = await get_all_activities(activity_cache, access_token)
-            
-            if status_code == 200 and len(activities) > 0:
-                daily_summary, stat_summary = summarize_activity(
-                    activities, sport_type=sport_type
-                )
-                if daily_summary.empty:
-                    raise HTTPException(status_code=404, detail=f"No  {sport_type} activity found in your Strava")
-                    
-                username = user.get("username", get_user_name(access_token))
-
-                #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
-                new_image_src = plot_calendar(daily_summary, username=username, sport_type=sport_type, theme="All", is_parallel=False)
-
-                users_collection.update_one(
-                    {"_id": ObjectId(uid)},
-                    {
-                        "$set": {
-                            cache_key: {"image_src":new_image_src,
-                                        "stat": stat_summary
-                                        },
-                            "username": username
-                        }
-                    },
-                )
-            else:
-                error_message = {"error": "No activity found in this account"}
-                return JSONResponse(error_message), 404
+            error_message = {"error": "No activity found in this account"}
+            return JSONResponse(error_message), 404
 
     # Cache the result
     result = {"image":new_image_src, "stat":stat_summary}
