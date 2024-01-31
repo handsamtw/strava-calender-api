@@ -15,7 +15,7 @@ from fastapi import FastAPI, Depends, Request
 import hashlib
 
 
-response_cache = TTLCache(maxsize=256, ttl=60)
+response_cache = TTLCache(maxsize=256, ttl=300)
 activity_cache = TTLCache(maxsize=256, ttl=600)
 
 from dotenv import load_dotenv
