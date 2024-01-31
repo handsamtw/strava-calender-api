@@ -51,7 +51,7 @@ users_collection = db["users"]
 app = FastAPI()
 # Define CORS settings
 origins = [
-    "http://127.0.0.1:4200",  
+    "http://localhost:4200",  
     "https://strava-calender.vercel.app",
 ]
 

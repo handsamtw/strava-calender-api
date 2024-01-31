@@ -156,8 +156,9 @@ def summarize_activity(activities, sport_type=None):
 
 def plot_calendar(daily_summary, username, sport_type, unit="metric", theme="Reds", is_parallel=True):
     def generate_heatmap(cur_theme):
-
-        unit_type = unit_info[unit]
+        
+    
+        unit_type = unit_info[unit.lower()]
 
         meter_to_unit_factor = unit_type["unit_factor"]
         unit_text = unit_type["unit_text"]
