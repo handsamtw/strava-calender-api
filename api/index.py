@@ -161,7 +161,6 @@ async def get_activity_calendar(
             stat_summary = user[cache_key]["stat"]
         else:
             activities, status_code = await get_all_activities(access_token)
-            
             if status_code == 200 and len(activities) > 0:
                 daily_summary, stat_summary = summarize_activity(
                     activities, sport_type=sport_type

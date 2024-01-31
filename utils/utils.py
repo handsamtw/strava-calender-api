@@ -51,14 +51,47 @@ async def get_all_activities(token):
     required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
 
     tasks = []
-    for page_num in range(1, 20):
+    for page_num in range(1, 10):
         activity = _fetch_activities(page_num)
+        
         if not activity:
             break
         tasks.append(activity)
     
 
     filtered_activities = await asyncio.gather(*tasks)
+    result_list = []
+    for filtered_activity in filtered_activities:
+        if filtered_activity is not None:
+            result_list.extend(filtered_activity)
+    return result_list, 200
+
+
+def _get_all_activities_sequential(token):
+    def _fetch_activities(page_num):
+        print("Page num: ", page_num)
+        url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
+        response = requests.get(url, headers=headers, timeout=5)
+        if response.status_code == 200:
+            activities = response.json()
+            filtered_activities = [
+                {col: activity[col] for col in required_columns}
+                for activity in activities
+            ]
+            return filtered_activities
+        else:
+            return None  # Handle error cases based on your requirements
+
+    headers = {"Authorization": f"Bearer {token}"}
+    required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
+
+    filtered_activities = []
+    for page_num in range(1, 10):
+        activity = _fetch_activities(page_num)
+        if not activity:
+            break
+        filtered_activities.append(activity)
+    
     result_list = []
     for filtered_activity in filtered_activities:
         if filtered_activity is not None:
