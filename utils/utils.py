@@ -30,32 +30,16 @@ async def get_all_activities(activity_cache, token):
                - If there's an error, returns the error response and its status code.
     """
 
-    async def _fetch_activities(page_num):
-        print("Page num: ", page_num)
-        url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
-
-        async with httpx.AsyncClient(headers=headers) as client:
-            response = await client.get(url)
-            if response.status_code == 200:
-                activities = response.json()
-                filtered_activities = [
-                    {col: activity[col] for col in required_columns}
-                    for activity in activities
-                ]
-                return filtered_activities
-                # return response.json()
-            else:
-                return None  # Handle error cases based on your requirements
+    
     if token in activity_cache:
         print("actvitiy cache hit!")
         return activity_cache[token], 200
     
-    headers = {"Authorization": f"Bearer {token}"}
-    required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
-
+    max_page_num = activity_num_estimator(token)
+    # max_page_num = 11
     tasks = []
-    for page_num in range(1, 3):
-        activity = _fetch_activities(page_num)
+    for page_num in range(1, max_page_num):
+        activity = _fetch_activities_async(token, page_num)
         
         if not activity:
             break
@@ -70,12 +54,13 @@ async def get_all_activities(activity_cache, token):
     activity_cache[token] = result_list
     return result_list, 200
 
-
-def _get_all_activities_sequential(token):
-    def _fetch_activities(page_num):
-        print("Page num: ", page_num)
-        url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
-        response = requests.get(url, headers=headers, timeout=5)
+async def _fetch_activities_async(token, page_num):
+    print("Page num: ", page_num)
+    url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
+    headers = {"Authorization": f"Bearer {token}"}
+    required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
+    async with httpx.AsyncClient(headers=headers) as client:
+        response = await client.get(url)
         if response.status_code == 200:
             activities = response.json()
             filtered_activities = [
@@ -83,24 +68,19 @@ def _get_all_activities_sequential(token):
                 for activity in activities
             ]
             return filtered_activities
+            # return response.json()
         else:
             return None  # Handle error cases based on your requirements
 
+def _fetch_activities_sync(token, page_num):
     headers = {"Authorization": f"Bearer {token}"}
-    required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
-
-    filtered_activities = []
-    for page_num in range(1, 10):
-        activity = _fetch_activities(page_num)
-        if not activity:
-            break
-        filtered_activities.append(activity)
-    
-    result_list = []
-    for filtered_activity in filtered_activities:
-        if filtered_activity is not None:
-            result_list.extend(filtered_activity)
-    return result_list, 200
+    url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        activities = response.json()
+        return activities
+    else:
+        return None  
 
 
 def summarize_activity(activities, sport_type=None):
@@ -290,7 +270,7 @@ def refresh_access_token_if_expired(user):
             "grant_type": "refresh_token",
             "refresh_token": user["refresh_token"],
         }
-        response = requests.post(refresh_token_url, data=refresh_data, timeout=5)
+        response = requests.post(refresh_token_url, data=refresh_data)
 
         return response.json(), response.status_code
 
@@ -353,7 +333,7 @@ def request_token(code):
         "grant_type": "authorization_code",
     }
 
-    response = requests.request("POST", url, data=payload, timeout=5)
+    response = requests.request("POST", url, data=payload)
     if response.status_code == 200:
         data = response.json()
         return {
@@ -379,7 +359,7 @@ def get_last_activity_id(access_token):
     url = "https://www.strava.com/api/v3/activities?per_page=1&page=1"
     headers = {"Authorization": f"Bearer {access_token}"}
 
-    response = requests.get(url, headers=headers, timeout=5)
+    response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
         data = response.json()
@@ -392,12 +372,23 @@ def get_user_name(access_token):
     url = "https://www.strava.com/api/v3/athlete"
     headers = {"Authorization": f"Bearer {access_token}"}
 
-    response = requests.get(url, headers=headers, timeout=5)
+    response = requests.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
         return data["firstname"] + " " + data["lastname"]
             
     return ""
+
+def activity_num_estimator(token):   
+    tier1 = _fetch_activities_sync(token, 4)
+    if not tier1:
+        return 4
+    else:
+        tier2 = _fetch_activities_sync(token, 8)
+        if not tier2:
+            return 8
+    return 12
+    
 
 
     # if user have more than 1000 activity, we classified as heavy user
