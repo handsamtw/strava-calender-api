@@ -192,7 +192,9 @@ async def get_activity_calendar(
 
     # Cache the result
     result = {"image":new_image_src, "stat":stat_summary}
+    
     cache[hashed_url_cache_key] = result
+    
     print("Run time:", round(time.time() - start, 3))
     if as_image and as_image.lower() == "true":
         # Decode the base64 string to bytes
