@@ -133,7 +133,7 @@ def summarize_activity(activities, sport_type=None):
                             axis=1).reset_index()
     stat_summary.columns = ["year", 'count', eval_metric]
     stat_summary["count"] = stat_summary["count"].fillna(0)
-    
+    stat_summary = stat_summary.sort_values(by='year')
     return daily_summary, stat_summary.to_dict(orient='records')
 
 
