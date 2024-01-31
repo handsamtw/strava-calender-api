@@ -54,7 +54,7 @@ async def get_all_activities(activity_cache, token):
     required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
 
     tasks = []
-    for page_num in range(1, 10):
+    for page_num in range(1, 3):
         activity = _fetch_activities(page_num)
         
         if not activity:
@@ -177,13 +177,17 @@ def summarize_activity(activities, sport_type=None):
 def plot_calendar(daily_summary, username, sport_type, unit="metric", theme="Reds", is_parallel=True):
     def generate_heatmap(cur_theme):
 
-        meter_to_unit_factor = 1609 if unit == "imperial" else 1000
-        if sport_type.lower() == 'swim':
-            meter_to_unit_factor = 0.914
-        if unit == "imperial":
-            unit_text = "unit: mi"
-        else:
-            unit_text = "unit: km"
+        unit_type = unit_info[unit]
+
+        meter_to_unit_factor = unit_type["unit_factor"]
+        unit_text = unit_type["unit_text"]
+
+        if sport_type.lower() == 'swim' and unit_type["swim_factor"] is not None:
+            meter_to_unit_factor = unit_type["swim_factor"]
+            unit_text = unit_type["swim_text"]
+        
+        
+        
         fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0] / meter_to_unit_factor,
             suptitle = suptitle,
@@ -195,9 +199,10 @@ def plot_calendar(daily_summary, username, sport_type, unit="metric", theme="Red
             yearlabel_kws=yearlabel_kws
         )
         
+        
         poweredby_text = "Power by @handsamtw - strava-calender.vercel.app"
         fig.text(0, -0.05, poweredby_text,color='#ababab', fontsize=12)
-        fig.text(0.83, -0.05, unit_text,color='#ababab', fontsize=10)
+        fig.text(0.83, -0.05, f"unit: {unit_text}",color='#ababab', fontsize=10)
         with io.BytesIO() as buffer:
             fig.savefig(buffer, bbox_inches="tight", dpi=200, format="png")
             buffer.seek(0)
@@ -229,6 +234,7 @@ def plot_calendar(daily_summary, username, sport_type, unit="metric", theme="Red
         "RdPu": "RdPu",
         "twilight": "twilight",
     }
+
     # Determine which theme(s) to process
     theme_to_process = (
         list(c_map.keys())
@@ -237,7 +243,16 @@ def plot_calendar(daily_summary, username, sport_type, unit="metric", theme="Red
         if theme in c_map
         else ["Reds"]
     )
-    
+    unit_info = {
+        "imperial": {"unit_factor": 1609, 
+                     "unit_text": "mi", 
+                     "swim_factor": 0.914, 
+                     "swim_text": "yd"},
+        "metric": {"unit_factor": 1000, 
+                   "unit_text": "km", 
+                   "swim_factor": None, 
+                   "swim_text": None}
+        }
     suptitle = f"{username}'s {sport_type} on Strava" if username and sport_type else None
     suptitle_kws = {"x":0.45, "y":1.07,"fontsize": 20, 'color': '#ababab'} if suptitle else None
     yearlabel_kws = {"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"}
@@ -383,6 +398,10 @@ def get_user_name(access_token):
         return data["firstname"] + " " + data["lastname"]
             
     return ""
+
+
+    # if user have more than 1000 activity, we classified as heavy user
+
 # def html_to_activity_image(activity_id):
 #     output_path = "/tmp"
 #     hti = Html2Image(output_path=output_path)

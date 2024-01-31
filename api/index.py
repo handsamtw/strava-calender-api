@@ -108,6 +108,7 @@ def generate_user_id(code: str):
 async def get_activity_calendar(
     uid,
     sport_type,
+    unit='metric',
     theme='All',
     as_image=False,
     hashed_url_cache_key: str = Depends(_get_hashed_url),
@@ -175,7 +176,7 @@ async def get_activity_calendar(
                 )
             
             #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
-            new_image_src = plot_calendar(daily_summary, username=username, sport_type=sport_type, theme=theme, is_parallel=False)
+            new_image_src = plot_calendar(daily_summary, unit=unit, username=username, sport_type=sport_type, theme=theme, is_parallel=False)
 
         else:
             error_message = {"error": "No activity found in this account"}
