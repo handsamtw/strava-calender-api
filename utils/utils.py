@@ -17,7 +17,7 @@ import asyncio
 mpl.use("agg")
 
 
-async def get_all_activities(token):
+async def get_all_activities(activity_cache, token):
     """
     Retrieves all activities using the provided token from the Strava API.
 
@@ -46,7 +46,10 @@ async def get_all_activities(token):
                 # return response.json()
             else:
                 return None  # Handle error cases based on your requirements
-
+    if token in activity_cache:
+        print("actvitiy cache hit!")
+        return activity_cache[token], 200
+    
     headers = {"Authorization": f"Bearer {token}"}
     required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
 
@@ -64,6 +67,7 @@ async def get_all_activities(token):
     for filtered_activity in filtered_activities:
         if filtered_activity is not None:
             result_list.extend(filtered_activity)
+    activity_cache[token] = result_list
     return result_list, 200
 
 
@@ -336,7 +340,7 @@ def request_token(code):
 
     return response.json(), response.status_code
 
-
+# Deprecated
 def get_last_activity_id(access_token):
     """
     Fetches the ID of the last activity using the provided Strava access token.

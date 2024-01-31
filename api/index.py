@@ -15,7 +15,8 @@ from fastapi import FastAPI, Depends, Request
 import hashlib
 
 
-cache = TTLCache(maxsize=256, ttl=60)
+response_cache = TTLCache(maxsize=256, ttl=300)
+activity_cache = TTLCache(maxsize=256, ttl=600)
 
 from dotenv import load_dotenv
 
@@ -29,7 +30,6 @@ from utils.utils import (
     plot_calendar,
     request_token,
     refresh_access_token_if_expired,
-    get_last_activity_id,
     get_user_name
 )
 
@@ -64,8 +64,13 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all HTTP headers
 )
 # Dependency to use caching in your route
-def _get_cache():
-    return cache
+def _get_response_cache():
+    return response_cache
+
+# Dependency to use caching in your route
+def _get_activity_cache():
+    return activity_cache
+
 def _get_hashed_url(request: Request):
     # Use a hash function to generate the hash from the URL
     url = request.url._url
@@ -106,13 +111,14 @@ async def get_activity_calendar(
     theme='All',
     as_image=False,
     hashed_url_cache_key: str = Depends(_get_hashed_url),
-    cache: TTLCache = Depends(_get_cache)
+    response_cache: TTLCache = Depends(_get_response_cache),
+    activity_cache: TTLCache = Depends(_get_activity_cache),
 ):
     start = time.time()
-    cached_result = cache.get(hashed_url_cache_key)
     
-    if cached_result:
+    if hashed_url_cache_key in response_cache:
         print("Cache hit!")
+        cached_result = response_cache.get(hashed_url_cache_key)
         new_image_src, stat_summary = cached_result["image"], cached_result["stat"]
         
     else:
@@ -148,51 +154,37 @@ async def get_activity_calendar(
             access_token = refresh_token_response["access_token"]
 
         
-        cache_key = f"{sport_type.lower()}-imageSrc"
-        last_activity_id, status_code = get_last_activity_id(access_token)
-        if (
-            status_code == 200
-            and "last_activity_id" in user
-            and user["last_activity_id"] == last_activity_id
-            and cache_key in user
-        ):
-            print("No new activity found")
-            new_image_src = user[cache_key]["image_src"]
-            stat_summary = user[cache_key]["stat"]
-        else:
-            activities, status_code = await get_all_activities(access_token)
-            if status_code == 200 and len(activities) > 0:
-                daily_summary, stat_summary = summarize_activity(
-                    activities, sport_type=sport_type
-                )
-                if daily_summary.empty:
-                    raise HTTPException(status_code=404, detail=f"No  {sport_type} activity found in your Strava")
-                    
-                username = user.get("username", get_user_name(access_token))
+        
+        
+        activities, status_code = await get_all_activities(activity_cache, access_token)
+        
+        if status_code == 200 and len(activities) > 0:
+            daily_summary, stat_summary = summarize_activity(
+                activities, sport_type=sport_type
+            )
+            if daily_summary.empty:
+                raise HTTPException(status_code=404, detail=f"No  {sport_type} activity found in your Strava")
+                
+            username = user.get("username", None)
 
-                #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
-                new_image_src = plot_calendar(daily_summary, username=username, sport_type=sport_type, theme="All", is_parallel=False)
-
+            if username is None:
+                username = get_user_name(access_token)
                 users_collection.update_one(
                     {"_id": ObjectId(uid)},
-                    {
-                        "$set": {
-                            "last_activity_id": last_activity_id,
-                            cache_key: {"image_src":new_image_src,
-                                        "stat": stat_summary
-                                        },
-                            "username": username
-                        }
-                    },
+                    {"$set": {"username": username}},
                 )
-            else:
-                error_message = {"error": "No activity found in this account"}
-                return JSONResponse(error_message), 404
+            
+            #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
+            new_image_src = plot_calendar(daily_summary, username=username, sport_type=sport_type, theme=theme, is_parallel=False)
+
+        else:
+            error_message = {"error": "No activity found in this account"}
+            raise HTTPException(status_code=404, detail="No activity found in this Strava account")
 
     # Cache the result
     result = {"image":new_image_src, "stat":stat_summary}
     
-    cache[hashed_url_cache_key] = result
+    response_cache[hashed_url_cache_key] = result
     
     print("Run time:", round(time.time() - start, 3))
     if as_image and as_image.lower() == "true":
