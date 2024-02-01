@@ -58,7 +58,7 @@ async def _fetch_activities_async(token, page_num):
     print("Page num: ", page_num)
     url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
     headers = {"Authorization": f"Bearer {token}"}
-    required_columns = ["name", "distance", "moving_time", "type", "start_date_local"]
+    required_columns = ["name", "distance", "moving_time", "type", "start_date_local", "total_elevation_gain"]
     async with httpx.AsyncClient(headers=headers) as client:
         response = await client.get(url)
         if response.status_code == 200:
@@ -104,8 +104,7 @@ def summarize_activity(activities, sport_type=None):
     df["start_date_local"] = pd.to_datetime(
         df["start_date_local"], format="%Y-%m-%dT%H:%M:%SZ"
     )
-    earliest_date = df["start_date_local"].min()
-    latest_date = df["start_date_local"].max()
+    
     df.set_index("start_date_local", inplace=True)
 
     # Filter activities by sport type if specified
@@ -144,23 +143,23 @@ def summarize_activity(activities, sport_type=None):
         return df, pd.DataFrame()
 
     # Group by date and calculate the sum for each day
-    daily_summary = df.resample("D").agg({eval_metric: "sum"})
+    agg_param = {eval_metric: "sum"}
+    if eval_metric == "distance":
+        agg_param["total_elevation_gain"] = "sum"
+    daily_summary = df.resample("D").agg(agg_param)
+
     df_activity_count = df.groupby(df.index.year).size().rename('count')
-
-    df_distance_per_year = daily_summary.groupby(daily_summary.index.year)[eval_metric].sum()
-    stat_summary = pd.DataFrame({'count': df_activity_count, 'distance': df_distance_per_year})
-    stat_summary["count"] = stat_summary['count'].fillna(0).astype(int)
-
-    # df_activity_count = df.groupby(df.index.year).size().rename('count')
-
-    # stat_per_year = (daily_summary.groupby(daily_summary.index.year)[eval_metric].sum())
+    df_eval_per_year = daily_summary.groupby(daily_summary.index.year)[eval_metric].sum()
+    stat_summary = pd.DataFrame({'count': df_activity_count, eval_metric: df_eval_per_year})
+    if eval_metric == "distance":
+        df_elevation_per_year = (daily_summary.groupby(daily_summary.index.year)["total_elevation_gain"].sum())
+        stat_summary['elevation'] = df_elevation_per_year
     
-    # stat_summary = pd.concat([df_activity_count, 
-    #                         stat_per_year], 
-    #                         axis=1).reset_index()
-    # stat_summary.columns = ["year", 'count', eval_metric]
-    # stat_summary["count"] = stat_summary["count"].fillna(0)
-    # stat_summary = stat_summary.sort_values(by='year')
+        
+    
+    stat_summary["count"] = stat_summary['count'].fillna(0)
+
+    
     return daily_summary, stat_summary
 
 
@@ -168,7 +167,7 @@ def plot_calendar(daily_summary, stat_summary, username, sport_type, unit="metri
     
     def generate_heatmap(cur_theme):
         fig, _ = calplot.calplot(
-            daily_summary.iloc[:, 0] / meter_to_unit_factor,
+            daily_summary.iloc[:, 0] / unit_factor,
             ax_title=stat_text_dict,
             suptitle = suptitle,
             suptitle_kws=suptitle_kws,
@@ -213,6 +212,22 @@ def plot_calendar(daily_summary, stat_summary, username, sport_type, unit="metri
         "twilight": "twilight",
     }
 
+    unit_info = {
+        "imperial": {"distance_unit_factor": 1609, 
+                     "distance_unit_text": "mi", 
+                     "elev_unit_factor": 0.3048, 
+                     "elev_unit_text": "ft", 
+                     "distance_swim_factor": 0.914, 
+                     "distance_swim_text": "yd",
+                     },
+        "metric": {"distance_unit_factor": 1000, 
+                   "distance_unit_text": "km", 
+                   "elev_unit_factor": 1, 
+                   "elev_unit_text": "m", 
+                   "distance_swim_factor": None, 
+                   "distance_swim_text": None}
+        }
+
     # Determine which theme(s) to process
     theme_to_process = (
         list(c_map.keys())
@@ -221,28 +236,33 @@ def plot_calendar(daily_summary, stat_summary, username, sport_type, unit="metri
         if theme in c_map
         else ["Reds"]
     )
-    unit_info = {
-        "imperial": {"unit_factor": 1609, 
-                     "unit_text": "mi", 
-                     "swim_factor": 0.914, 
-                     "swim_text": "yd"},
-        "metric": {"unit_factor": 1000, 
-                   "unit_text": "km", 
-                   "swim_factor": None, 
-                   "swim_text": None}
-        }
-    unit_type = unit_info[unit.lower()]
-
-    meter_to_unit_factor = unit_type["unit_factor"]
-    unit_text = unit_type["unit_text"]
-
-    if sport_type.lower() == 'swim' and unit_type["swim_factor"] is not None:
-        meter_to_unit_factor = unit_type["swim_factor"]
-        unit_text = unit_type["swim_text"]
+   
+    if "distance" not in stat_summary:
+        unit_factor = 60
+        unit_text = "min"
+        stat_text_dict = stat_summary.apply(lambda row: 
+                                        f"{row['count']:,.0f} Activities "
+                                        f"({row['moving_time']/unit_factor:,.0f} {unit_text})",
+                                        axis=1).to_dict()
+    else:
         
-    stat_text_dict = stat_summary.apply(
-        lambda row: f"{round(row['count'])} Activities ({round(row['distance']/meter_to_unit_factor)} {unit_text})", 
-        axis=1).to_dict()
+        unit_type = unit_info[unit.lower()]
+
+        unit_factor = unit_type["distance_unit_factor"]
+        unit_text = unit_type["distance_unit_text"]
+        elev_unit_factor = unit_type["elev_unit_factor"]
+        elev_unit_text = unit_type["elev_unit_text"]
+
+        if sport_type.lower() == 'swim' and unit_type["distance_swim_factor"] is not None:
+            unit_factor = unit_type["distance_swim_factor"]
+            unit_text = unit_type["distance_swim_text"]
+
+        stat_text_dict = stat_summary.apply(lambda row: 
+                                        f"{row['count']:,.0f} Activities "
+                                        f"({row['distance']/unit_factor:,.0f} {unit_text} / "
+                                        f"{row['elevation']/elev_unit_factor:,.0f} {elev_unit_text} elev)", 
+                                        axis=1).to_dict()
+
     suptitle = f"{username}'s {sport_type} on Strava" if username and sport_type else None
     suptitle_kws = {"x":0.45, "y":1.07,"fontsize": 20, 'color': '#ababab'} if suptitle else None
     yearlabel_kws = {"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"}
