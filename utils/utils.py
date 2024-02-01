@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 import requests
 import numpy as np
 import pandas as pd
-import calplot
+# import calplot
+from utils import calplot
 import concurrent.futures
 import matplotlib as mpl
 import matplotlib.pyplot as plt
