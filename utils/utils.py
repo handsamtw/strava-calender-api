@@ -4,9 +4,7 @@ from base64 import b64encode
 from datetime import datetime, timedelta
 
 import requests
-import numpy as np
 import pandas as pd
-# import calplot
 from utils import calplot
 import concurrent.futures
 import matplotlib as mpl
@@ -133,7 +131,12 @@ def summarize_activity(activities, sport_type=None):
             filtered_sport_type = available_sport_type[sport_type.lower()]
             if filtered_sport_type in sports_evl_by_time:
                 eval_metric = 'moving_time'
-            df = df[df["type"] == filtered_sport_type] 
+            if filtered_sport_type == "Ride":
+                df = df[df["type"].isin(["Ride", "VirtualRide"])]     
+            elif filtered_sport_type == "Run":
+                df = df[df["type"].isin(["Run", "VirtualRun"])]     
+            else:
+                df = df[df["type"]== filtered_sport_type] 
     
     print("Total activity:", df.shape[0])
     # If df is empty, return two empty dataframe
