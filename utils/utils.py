@@ -6,7 +6,8 @@ from datetime import datetime, timedelta
 import requests
 import numpy as np
 import pandas as pd
-import calplot
+# import calplot
+from utils import calplot
 import concurrent.futures
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -36,16 +37,12 @@ async def get_all_activities(activity_cache, token):
         return activity_cache[token], 200
     
     max_page_num = activity_num_estimator(token)
-    # max_page_num = 11
+    semaphore = asyncio.Semaphore(6)  # Limit the number of concurrent requests to 5
     tasks = []
     for page_num in range(1, max_page_num):
-        activity = _fetch_activities_async(token, page_num)
+        tasks.append(fetch_activities_with_sem(token, page_num, semaphore))
         
-        if not activity:
-            break
-        tasks.append(activity)
     
-
     filtered_activities = await asyncio.gather(*tasks)
     result_list = []
     for filtered_activity in filtered_activities:
@@ -54,7 +51,12 @@ async def get_all_activities(activity_cache, token):
     activity_cache[token] = result_list
     return result_list, 200
 
+async def fetch_activities_with_sem(token, page_num, semaphore):
+    async with semaphore:
+        return await _fetch_activities_async(token, page_num)
+
 async def _fetch_activities_async(token, page_num):
+    
     print("Page num: ", page_num)
     url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
     headers = {"Authorization": f"Bearer {token}"}
@@ -68,9 +70,8 @@ async def _fetch_activities_async(token, page_num):
                 for activity in activities
             ]
             return filtered_activities
-            # return response.json()
         else:
-            return None  # Handle error cases based on your requirements
+            return None  
 
 def _fetch_activities_sync(token, page_num):
     headers = {"Authorization": f"Bearer {token}"}
@@ -143,34 +144,29 @@ def summarize_activity(activities, sport_type=None):
     daily_summary = df.resample("D").agg({eval_metric: "sum"})
     df_activity_count = df.groupby(df.index.year).size().rename('count')
 
-    stat_per_year = (daily_summary.groupby(daily_summary.index.year)[eval_metric].sum())
+    df_distance_per_year = daily_summary.groupby(daily_summary.index.year)[eval_metric].sum()
+    stat_summary = pd.DataFrame({'count': df_activity_count, 'distance': df_distance_per_year})
+    stat_summary["count"] = stat_summary['count'].fillna(0).astype(int)
+
+    # df_activity_count = df.groupby(df.index.year).size().rename('count')
+
+    # stat_per_year = (daily_summary.groupby(daily_summary.index.year)[eval_metric].sum())
     
-    stat_summary = pd.concat([df_activity_count, 
-                            stat_per_year], 
-                            axis=1).reset_index()
-    stat_summary.columns = ["year", 'count', eval_metric]
-    stat_summary["count"] = stat_summary["count"].fillna(0)
-    stat_summary = stat_summary.sort_values(by='year')
-    return daily_summary, stat_summary.to_dict(orient='records')
+    # stat_summary = pd.concat([df_activity_count, 
+    #                         stat_per_year], 
+    #                         axis=1).reset_index()
+    # stat_summary.columns = ["year", 'count', eval_metric]
+    # stat_summary["count"] = stat_summary["count"].fillna(0)
+    # stat_summary = stat_summary.sort_values(by='year')
+    return daily_summary, stat_summary
 
 
-def plot_calendar(daily_summary, username, sport_type, unit="metric", theme="Reds", is_parallel=True):
+def plot_calendar(daily_summary, stat_summary, username, sport_type, unit="metric", theme="Reds", is_parallel=True):
+    
     def generate_heatmap(cur_theme):
-        
-    
-        unit_type = unit_info[unit.lower()]
-
-        meter_to_unit_factor = unit_type["unit_factor"]
-        unit_text = unit_type["unit_text"]
-
-        if sport_type.lower() == 'swim' and unit_type["swim_factor"] is not None:
-            meter_to_unit_factor = unit_type["swim_factor"]
-            unit_text = unit_type["swim_text"]
-        
-        
-        
         fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0] / meter_to_unit_factor,
+            ax_title=stat_text_dict,
             suptitle = suptitle,
             suptitle_kws=suptitle_kws,
             cmap=cur_theme,
@@ -179,11 +175,9 @@ def plot_calendar(daily_summary, username, sport_type, unit="metric", theme="Red
             edgecolor=None,
             yearlabel_kws=yearlabel_kws
         )
-        
-        
         poweredby_text = "Power by @handsamtw - strava-calender.vercel.app"
-        fig.text(0, -0.05, poweredby_text,color='#ababab', fontsize=12)
-        fig.text(0.83, -0.05, f"unit: {unit_text}",color='#ababab', fontsize=10)
+        fig.text(0.05, -0.05, poweredby_text,color='#ababab', fontsize=10)
+        fig.text(0.79, -0.05, f"unit: {unit_text}",color='#ababab', fontsize=9)
         with io.BytesIO() as buffer:
             fig.savefig(buffer, bbox_inches="tight", dpi=200, format="png")
             buffer.seek(0)
@@ -234,6 +228,18 @@ def plot_calendar(daily_summary, username, sport_type, unit="metric", theme="Red
                    "swim_factor": None, 
                    "swim_text": None}
         }
+    unit_type = unit_info[unit.lower()]
+
+    meter_to_unit_factor = unit_type["unit_factor"]
+    unit_text = unit_type["unit_text"]
+
+    if sport_type.lower() == 'swim' and unit_type["swim_factor"] is not None:
+        meter_to_unit_factor = unit_type["swim_factor"]
+        unit_text = unit_type["swim_text"]
+        
+    stat_text_dict = stat_summary.apply(
+        lambda row: f"{round(row['count'])} Activities ({round(row['distance']/meter_to_unit_factor)} {unit_text})", 
+        axis=1).to_dict()
     suptitle = f"{username}'s {sport_type} on Strava" if username and sport_type else None
     suptitle_kws = {"x":0.45, "y":1.07,"fontsize": 20, 'color': '#ababab'} if suptitle else None
     yearlabel_kws = {"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"}
