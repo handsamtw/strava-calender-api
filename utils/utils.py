@@ -168,6 +168,7 @@ def plot_calendar(daily_summary, stat_summary, username, sport_type, unit="metri
     def generate_heatmap(cur_theme):
         fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0] / unit_factor,
+            yearascending=False,
             ax_title=stat_text_dict,
             suptitle = suptitle,
             suptitle_kws=suptitle_kws,
