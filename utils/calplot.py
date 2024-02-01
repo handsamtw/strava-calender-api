@@ -242,7 +242,7 @@ def yearplot(data, year=None, how='sum',
 
 
 def calplot(data, how='sum',
-            yearlabels=True, yearascending=True,
+            yearlabels=True, yearascending=True, ax_title=None,
             yearlabel_kws=None, subplot_kws=None, gridspec_kws=None,
             figsize=None, fig_kws=None, colorbar=None,
             suptitle=None, suptitle_kws=None,
@@ -330,13 +330,25 @@ def calplot(data, how='sum',
     ylabel_kws.update(yearlabel_kws)
 
     max_weeks = 0
-
+    ax_text_attributes = { 
+        'x': 0.005,
+        'y': 1.2,
+        'fontsize': 9,
+        'verticalalignment': 'top',
+        'color': '#3b444b',
+        'fontname': 'Arial'
+        }
     for year, ax in zip(years, axes):
         yearplot(by_day, year=year, how=None, ax=ax, **kwargs)
         max_weeks = max(max_weeks, ax.get_xlim()[1])
 
         if yearlabels:
             ax.set_ylabel(str(year), **ylabel_kws)
+        if ax_title:
+            textstr = ax_title[year]
+            ax.text(s=textstr, 
+                    transform= ax.transAxes,
+                    **ax_text_attributes)
 
     # In a leap year it might happen that we have 54 weeks (e.g., 2012).
     # Here we make sure the width is consistent over all years.
@@ -358,7 +370,10 @@ def calplot(data, how='sum',
                          orientation='vertical')
         else:
             fig.subplots_adjust(right=0.8)
-            cax = fig.add_axes([0.85, 0.025, 0.02, 0.95])
+            if ax_title:
+                cax = fig.add_axes([0.8, 0.025, 0.02, 0.95])
+            else:
+                cax = fig.add_axes([0.85, 0.025, 0.02, 0.95])
             fig.colorbar(axes[0].get_children()[1], cax=cax, orientation='vertical')
 
     stitle_kws.update(suptitle_kws)

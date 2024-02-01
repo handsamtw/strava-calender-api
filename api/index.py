@@ -120,7 +120,7 @@ async def get_activity_calendar(
     if hashed_url_cache_key in response_cache:
         print("Cache hit!")
         cached_result = response_cache.get(hashed_url_cache_key)
-        new_image_src, stat_summary = cached_result["image"], cached_result["stat"]
+        new_image_src = cached_result["image"]
         
     else:
         print('Cache miss')
@@ -175,14 +175,14 @@ async def get_activity_calendar(
                 )
             
             #bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image 
-            new_image_src = plot_calendar(daily_summary, unit=unit, username=username, sport_type=sport_type, theme=theme, is_parallel=False)
+            new_image_src = plot_calendar(daily_summary, stat_summary=stat_summary,unit=unit, username=username, sport_type=sport_type, theme=theme, is_parallel=False)
 
         else:
             error_message = {"error": "No activity found in this account"}
             raise HTTPException(status_code=404, detail="No activity found in this Strava account")
 
     # Cache the result
-    result = {"image":new_image_src, "stat":stat_summary}
+    result = {"image":new_image_src}
     
     response_cache[hashed_url_cache_key] = result
     
