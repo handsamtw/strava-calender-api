@@ -202,7 +202,7 @@ def check_valid_uid(uid: str,
         
     if ObjectId.is_valid(uid):
         user = users_collection.find_one({"_id": ObjectId(uid)})
-        is_valid = user and "access_token" in user
+        is_valid = user is not None and "access_token" in user
         uid_cache[uid] = is_valid
         return {"is_valid": is_valid}
     
