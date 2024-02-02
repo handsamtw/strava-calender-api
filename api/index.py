@@ -17,7 +17,7 @@ import hashlib
 
 response_cache = TTLCache(maxsize=256, ttl=300)
 activity_cache = TTLCache(maxsize=256, ttl=600)
-
+uid_cache = TTLCache(maxsize=256, ttl=300)
 from dotenv import load_dotenv
 
 # Add project_root to the sys.path
@@ -63,13 +63,15 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all HTTP headers
 )
-# Dependency to use caching in your route
+
 def _get_response_cache():
     return response_cache
 
-# Dependency to use caching in your route
 def _get_activity_cache():
     return activity_cache
+
+def _get_uid_cache():
+    return uid_cache
 
 def _get_hashed_url(request: Request):
     # Use a hash function to generate the hash from the URL
@@ -82,14 +84,8 @@ async def root():
     result = {"Welcome to Strava-calendar-api": "Thank you for the contribution!"}
     return result
 
-
-
-
 @app.get("/uid")
 def generate_user_id(code: str):
-    
-    # code = request.args.get("code")
-
     if not code:
         error_message = {"error": "No code is found in redirect url"}
         return JSONResponse(content=error_message), 400
@@ -197,11 +193,17 @@ async def get_activity_calendar(
 
 
 @app.get("/check_valid_uid")
-def check_valid_uid(uid: str):
+def check_valid_uid(uid: str,
+                    uid_cache: TTLCache = Depends(_get_uid_cache),
+):
     is_valid = False
+    if uid in uid_cache:
+        return {"is_valid": uid_cache[uid]}
+        
     if ObjectId.is_valid(uid):
         user = users_collection.find_one({"_id": ObjectId(uid)})
         is_valid = user and "access_token" in user
+        uid_cache[uid] = is_valid
         return {"is_valid": is_valid}
     
     return {"is_valid": is_valid}
