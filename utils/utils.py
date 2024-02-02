@@ -267,7 +267,7 @@ def plot_calendar(daily_summary, stat_summary, username, sport_type, unit="metri
                                         axis=1).to_dict()
 
     suptitle = f"{username}'s {sport_type} on Strava" if username and sport_type else None
-    suptitle_kws = {"x":0.45, "y":1.07,"fontsize": 20, 'color': '#ababab'} if suptitle else None
+    suptitle_kws = {"x":0.45, "y":1.04,"fontsize": 20, 'color': '#ababab'} if suptitle else None
     yearlabel_kws = {"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"}
     # Initialize an empty dictionary to store encoded images
     image_dict = {}
