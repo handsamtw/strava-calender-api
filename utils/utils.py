@@ -35,7 +35,7 @@ async def get_all_activities(activity_cache, token):
         return activity_cache[token], 200
     
     max_page_num = activity_num_estimator(token)
-    semaphore = asyncio.Semaphore(6)  # Limit the number of concurrent requests to 5
+    semaphore = asyncio.Semaphore(12)  # Limit the number of concurrent requests to 12
     tasks = []
     for page_num in range(1, max_page_num):
         tasks.append(fetch_activities_with_sem(token, page_num, semaphore))
@@ -43,6 +43,7 @@ async def get_all_activities(activity_cache, token):
     
     filtered_activities = await asyncio.gather(*tasks)
     result_list = []
+    
     for filtered_activity in filtered_activities:
         if filtered_activity is not None:
             result_list.extend(filtered_activity)
@@ -54,12 +55,13 @@ async def fetch_activities_with_sem(token, page_num, semaphore):
         return await _fetch_activities_async(token, page_num)
 
 async def _fetch_activities_async(token, page_num):
-    
     print("Page num: ", page_num)
     url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
     headers = {"Authorization": f"Bearer {token}"}
     required_columns = ["name", "distance", "moving_time", "type", "start_date_local", "total_elevation_gain"]
-    async with httpx.AsyncClient(headers=headers) as client:
+    timeout = httpx.Timeout(timeout=30.0)
+    async with httpx.AsyncClient(headers=headers, timeout=timeout) as client:
+
         response = await client.get(url)
         if response.status_code == 200:
             activities = response.json()
