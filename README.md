@@ -4,7 +4,7 @@
 
 ## Why do I build this project?
 
-Strava Calendar API is the API that suppports Strava Calendar app to retrieve Strava personal data and plot the heatmap. It is implemented in Python Flask framework. The background of this project can be found at [Strava Calendar](https://github.com/handsamtw/strava-calender).
+Strava Calendar API is the API that suppports Strava Calendar app to retrieve Strava personal data and plot the calendar. It is implemented in FastAPI. The background of this project can be found at [Strava Calendar](https://github.com/handsamtw/strava-calender).
 
 ### Example
 
@@ -47,15 +47,16 @@ Strava Calendar API is the API that suppports Strava Calendar app to retrieve St
 
    Optional Parameters:
 
-   | Optional Parameters | Options                                                   | Description                                          |
-   | ------------------- | --------------------------------------------------------- | ---------------------------------------------------- |
-   | `theme`             | Reds (default), Blues, Greens, BuGn, PuBu, RdPu, twilight | Theme for the calendar                               |
-   | `plot_by`           | distance (default), time                                  | The scale used to plot the calendar                  |
-   | `as_image`          | True, False (default)                                     | Flag to determine if the response should be an image |
+   | Optional Parameters | Options                                                                                      | Description                                                                                                                                                                                       |
+   | ------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `theme`             | Reds (default), Blues, Greens, BuGn, PuBu, RdPu, twilight, All                               | Theme for the calendar                                                                                                                                                                            |
+   | `unit`              | imperial, metric                                                                             | Distance unit to calculate the stat of activity                                                                                                                                                   |
+   | `sport_type`        | Ex: run, ride, swim, walk, hike, trail run, alpine ski, yoga, hiit, weight training, workout | The sport type to filter the activity                                                                                                                                                             |
+   | `as_image`          | True, False (default)                                                                        | Flag to determine if the response should be an image, if set to False, will return a dictionary type as `{"image": {"theme1": 'base64_encoded_image1'}, {"theme2": 'base64_encoded_image2'}} ...` |
 
    Description
 
-   The endpoint grab the `access_token` requested before from database with provided uid -> check the token expiracy and refresh if required -> fetch strava activity -> plot calendar with given configuration
+   The endpoint grab the `access_token` from database with provided uid -> check the token expiracy and refresh if required -> fetch strava activity -> summarize the activity -> plot calendar with given configuration
 
    Response
 
@@ -99,30 +100,41 @@ To setup up locally devloping environment of this backend API, here is the todo 
 7. After your cluster is built up, click `connect button`, visit Drivers tab and select Python as programming language
    ![connect-cluster 1](/assets/mongodb/connect%20cluster1.png)
 
-8. Follow the instruction you saw, copy somthing like `mongodb+srv://<Your username>:{your password}@cluster0.<cluster name>.mongodb.net/?retryWrites=true&w=majority` and replace line around 32 in api/index.py with your own credential
+8. Follow the instruction you saw, copy the text of `mongodb+srv://<Your username>:{your password}@cluster0.<cluster name>.mongodb.net/?retryWrites=true&w=majority` and replace line below `# Connect to MongoDB` in api/index.py with your own credential
    ![connect-cluster 2](/assets/mongodb/connect%20cluster2.png)
 
 9. Navigate to database tab, click `browse collection`, and create your collection
    ![create-database](/assets/mongodb/create-database.png)
 
-10. After you create your database and collection, you might find the name mismatch between yours and mine at around line 40 in api/index.py. Change it to yours if needed.
+10. Replace the name of database and collection in api/index.py if needed.
 
 ### Setup Strava developer credential
 
 To make request to Strava API, there're three critical credential: CLIENT_ID, CLIENT_SECRET, ACCESS_TOKEN
-If you are a Strava user, you can login to your Strava account and hover to your icon at the top-right corner, click [settings](https://www.strava.com/settings/profil).
 
-<img height=200 src="./assets/strava/strava-api-application(1).png" />
+1. Go to Strava settings page
 
-Click [My API application](https://www.strava.com/settings/api) at the last tab of left sidebar. Once you create your application, Strava will grant you devloper Client ID, Client Secret, and access token, which you will use later in .env file
+   Login to your Strava account and hover to your icon at the top-right corner, click [settings](https://www.strava.com/settings/profile).
 
-<img height=200  src="./assets/strava/strava-api-application(2).png" />
+   <img height=200 src="./assets/strava/strava-api-application(1).png" />
 
-### Add .env file to the root directory
+2. Create application
 
-The .env.example serves as a template for developers to understand the required environment variables without exposing any sensitive data.
+   Click [My API application](https://www.strava.com/settings/api) at the last tab of left sidebar.
 
-Replace ACCESS_TOKEN, REFRESH_TOKEN, and MONGODB_PASSWORD in .env.example file to your own credential. Then run `mv .env.example .env` to rename the file
+   Fill the form belowed and set Authorization callback domain to <em>localhost:4200</em></p>
+
+   <img height=200 src="./assets/strava/create-application.png">
+
+   Once you create your application, Strava will grant you devloper Client ID, Client Secret, and access token, which you will use later in .env file
+
+    <img height=200  src="./assets/strava/strava-api-application(2).png" />
+
+3. Add .env file to the root directory
+
+   The .env.example serves as a template for developers to understand the required environment variables without exposing any sensitive data.
+
+   Replace ACCESS_TOKEN, REFRESH_TOKEN, and MONGODB_PASSWORD in .env.example file to your own credential. Then run `mv .env.example .env` to rename the file
 
 ### How to run the API endpoint locally
 
@@ -136,14 +148,6 @@ Replace ACCESS_TOKEN, REFRESH_TOKEN, and MONGODB_PASSWORD in .env.example file t
 
 2. Run `python3 -m pip install -r requirements-dev.txt` to install Python dependencies
 3. Run `hypercorn api/index.py` and visit `http://127.0.0.1:8000` to check API run successfully on you device
-
-## How to Contribute
-
-Before making PR request, please
-
-- Run `pytest tests` ensuring all test cases pass
-- Run `pylint ./**/*.py` ensuring the score is above 7/10. It would be great if you
-  can also help out on improving the score
 
 ## Design documentation
 
