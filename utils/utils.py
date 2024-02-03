@@ -35,7 +35,7 @@ async def get_all_activities(activity_cache, token):
         return activity_cache[token], 200
     
     max_page_num = activity_num_estimator(token)
-    semaphore = asyncio.Semaphore(12)  # Limit the number of concurrent requests to 12
+    semaphore = asyncio.Semaphore(14)  # Limit the number of concurrent requests to 12
     tasks = []
     for page_num in range(1, max_page_num):
         tasks.append(fetch_activities_with_sem(token, page_num, semaphore))
@@ -420,7 +420,7 @@ def activity_num_estimator(token):
         tier2 = _fetch_activities_sync(token, 8)
         if not tier2:
             return 8
-    return 12
+    return 15
     
 
 
