@@ -21,7 +21,7 @@ Strava Calendar API is the API that suppports Strava Calendar app to retrieve St
 
    Description
 
-   While interacting with [Strava Calendar](https://github.com/handsamtw/strava-calender) app, users initiate the authorization process by clicking on the <span><img height=25  width=125 src="./assets/strava/btn-strava.png" /></span> button.
+   While interacting with [Strava Calendar](https://github.com/handsamtw/strava-calender) app, users initiate the authorization process by clicking on the <span><img height=25  width=125 src="./public/assets/strava/btn-strava.png" /></span> button.
 
    This grants the application READ ALL access to their public Strava activities. Subsequently, Strava provides a code, which is utilized to request an `access_token` and `refresh_token`. The GET /uid endpoint is designed to store these credentials in the database and return a unique user identifier (ObjectID) for future reference.
 
@@ -95,16 +95,16 @@ To setup up locally devloping environment of this backend API, here is the todo 
 4. Navigate to Database at the left sidebar and click `Build a database`
 
 5. Choose the M0 Free version and the region that is closest to your geological location
-   ![create-cluster](/assets/mongodb/create%20cluster.png)
+   ![create-cluster](/public/assets/mongodb/create%20cluster.png)
 6. When MongoDB processes your request, add Username and Password to authenticate your connection with MongoDB. In addition, add entries to your IP Access List (Only an IP address you add to your Access List will be able to connect to your project's clusters)
 7. After your cluster is built up, click `connect button`, visit Drivers tab and select Python as programming language
-   ![connect-cluster 1](/assets/mongodb/connect%20cluster1.png)
+   ![connect-cluster 1](/public/assets/mongodb/connect%20cluster1.png)
 
 8. Follow the instruction you saw, copy the text of `mongodb+srv://<Your username>:{your password}@cluster0.<cluster name>.mongodb.net/?retryWrites=true&w=majority` and replace line below `# Connect to MongoDB` in api/index.py with your own credential
-   ![connect-cluster 2](/assets/mongodb/connect%20cluster2.png)
+   ![connect-cluster 2](/public/assets/mongodb/connect%20cluster2.png)
 
 9. Navigate to database tab, click `browse collection`, and create your collection
-   ![create-database](/assets/mongodb/create-database.png)
+   ![create-database](/public/assets/mongodb/create-database.png)
 
 10. Replace the name of database and collection in api/index.py if needed.
 
@@ -116,7 +116,7 @@ To make request to Strava API, there're three critical credential: CLIENT_ID, CL
 
    Login to your Strava account and hover to your icon at the top-right corner, click [settings](https://www.strava.com/settings/profile).
 
-   <img height=200 src="./assets/strava/strava-api-application(1).png" />
+   <img height=200 src="./public/assets/strava/strava-api-application(1).png" />
 
 2. Create application
 
@@ -124,11 +124,11 @@ To make request to Strava API, there're three critical credential: CLIENT_ID, CL
 
    Fill the form belowed and set Authorization callback domain to <em>localhost:4200</em></p>
 
-   <img height=200 src="./assets/strava/create-application.png">
+   <img height=200 src="./public/assets/strava/create-application.png">
 
    Once you create your application, Strava will grant you devloper Client ID, Client Secret, and access token, which you will use later in .env file
 
-    <img height=200  src="./assets/strava/strava-api-application(2).png" />
+    <img height=200  src="./public/assets/strava/strava-api-application(2).png" />
 
 3. Add .env file to the root directory
 
@@ -147,7 +147,7 @@ To make request to Strava API, there're three critical credential: CLIENT_ID, CL
 - Run `python3 -m pip install --upgrade pip` to upgrade pip
 
 2. Run `python3 -m pip install -r requirements-dev.txt` to install Python dependencies
-3. Run `hypercorn api/index.py` and visit `http://127.0.0.1:8000` to check API run successfully on you device
+3. Run `hypercorn api/index.py --reload` and visit `http://127.0.0.1:8000` to check API run successfully on you device
 
 ## Design documentation
 
