@@ -19,19 +19,15 @@ import matplotlib.pyplot as plt
 
 import os
 
-# Get the current script's directory
+# curr_dir = os.path.dirname(os.path.abspath(__file__))
+# fonts_dir = os.path.join(curr_dir, '..', 'assets', 'fonts')
 
-# Construct the path to the assets/fonts/Arial.ttc file
+# kanji_font_path = os.path.join(fonts_dir, 'ヒラギノ角ゴシック W0.ttc')
+# eng_font_path = os.path.join(fonts_dir, 'Arial.ttf')
+# eng_prop = font_manager.FontProperties(fname=eng_font_path)
 
-curr_dir = os.path.dirname(os.path.abspath(__file__))
-fonts_dir = os.path.join(curr_dir, '..', 'assets', 'fonts')
-
-kanji_font_path = os.path.join(fonts_dir, 'ヒラギノ角ゴシック W0.ttc')
-eng_font_path = os.path.join(fonts_dir, 'Arial.ttf')
-eng_prop = font_manager.FontProperties(fname=eng_font_path)
-
-plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams['font.sans-serif'] = eng_prop.get_name()
+# plt.rcParams['font.family'] = 'sans-serif'
+# plt.rcParams['font.sans-serif'] = eng_prop.get_name()
 
 
 
@@ -401,9 +397,9 @@ def calplot(data, how='sum',
 
     suptitle_has_chinese = True if re.search(u'[\u4e00-\u9fff]', suptitle) else False
     
-    if suptitle_has_chinese:
-        chn_prop = font_manager.FontProperties(fname=kanji_font_path)
-        plt.rcParams['font.sans-serif'] = chn_prop.get_name()
+    # if suptitle_has_chinese:
+    #     chn_prop = font_manager.FontProperties(fname=kanji_font_path)
+    #     plt.rcParams['font.sans-serif'] = chn_prop.get_name()
     
     plt.suptitle(suptitle, **stitle_kws)
     
