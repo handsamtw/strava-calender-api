@@ -3,17 +3,30 @@ Calendar heatmaps from Pandas time series data.
 
 Plot Pandas time series data sampled by day in a heatmap per calendar year.
 """
-
+import os
+import re
 import calendar
 import datetime
 from dateutil.relativedelta import relativedelta
-
 import numpy as np
 import pandas as pd
-
 from matplotlib.colors import ColorConverter, ListedColormap
 from matplotlib.patches import Polygon
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as font_manager
+
+
+curr_dir = os.path.dirname(os.path.abspath(__file__))
+fonts_dir = os.path.join(curr_dir, '..', 'assets', 'fonts')
+
+kanji_font_path = os.path.join(fonts_dir, 'ヒラギノ角ゴシック W0.ttc')
+eng_font_path = os.path.join(fonts_dir, 'Arial.ttf')
+eng_prop = font_manager.FontProperties(fname=eng_font_path)
+
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = eng_prop.get_name()
+
+
 
 def yearplot(data, year=None, how='sum',
              vmin=None, vmax=None,
@@ -377,6 +390,15 @@ def calplot(data, how='sum',
             fig.colorbar(axes[0].get_children()[1], cax=cax, orientation='vertical')
 
     stitle_kws.update(suptitle_kws)
-    plt.suptitle(suptitle, **stitle_kws)
+    
 
+    suptitle_has_chinese = True if re.search(u'[\u4e00-\u9fff]', suptitle) else False
+    
+    if suptitle_has_chinese:
+        chn_prop = font_manager.FontProperties(fname=kanji_font_path)
+        plt.rcParams['font.sans-serif'] = chn_prop.get_name()
+    
+    plt.suptitle(suptitle, **stitle_kws)
+    
     return fig, axes
+
