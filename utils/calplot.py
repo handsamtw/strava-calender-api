@@ -23,7 +23,7 @@ kanji_font_path = os.path.join(fonts_dir, 'ヒラギノ角ゴシック W0.ttc')
 eng_font_path = os.path.join(fonts_dir, 'Arial.ttf')
 eng_prop = font_manager.FontProperties(fname=eng_font_path)
 
-plt.rcParams['font.family'] = 'sans-serif'
+# plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = eng_prop.get_name()
 
 
@@ -395,9 +395,15 @@ def calplot(data, how='sum',
     suptitle_has_chinese = True if re.search(u'[\u4e00-\u9fff]', suptitle) else False
     
     if suptitle_has_chinese:
+        
         chn_prop = font_manager.FontProperties(fname=kanji_font_path)
+        print("fonts_dir:", fonts_dir)
+        print("chn_prop: ", chn_prop)
         plt.rcParams['font.sans-serif'] = chn_prop.get_name()
-    
+    else:
+        print("fonts_dir:", eng_font_path)
+        print("chn_prop: ", eng_prop)
+        
     plt.suptitle(suptitle, **stitle_kws)
     
     return fig, axes
