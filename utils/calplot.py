@@ -7,13 +7,33 @@ Plot Pandas time series data sampled by day in a heatmap per calendar year.
 import calendar
 import datetime
 from dateutil.relativedelta import relativedelta
-
+import re
 import numpy as np
 import pandas as pd
+import matplotlib.font_manager as font_manager
 
 from matplotlib.colors import ColorConverter, ListedColormap
 from matplotlib.patches import Polygon
 import matplotlib.pyplot as plt
+
+
+import os
+
+# Get the current script's directory
+
+# Construct the path to the assets/fonts/Arial.ttc file
+
+curr_dir = os.path.dirname(os.path.abspath(__file__))
+fonts_dir = os.path.join(curr_dir, '..', 'assets', 'fonts')
+
+chn_font_path = os.path.join(fonts_dir, 'STHeiti medium.ttc')
+eng_font_path = os.path.join(fonts_dir, 'Arial.ttf')
+eng_prop = font_manager.FontProperties(fname=eng_font_path)
+
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = eng_prop.get_name()
+
+
 
 def yearplot(data, year=None, how='sum',
              vmin=None, vmax=None,
@@ -377,6 +397,14 @@ def calplot(data, how='sum',
             fig.colorbar(axes[0].get_children()[1], cax=cax, orientation='vertical')
 
     stitle_kws.update(suptitle_kws)
-    plt.suptitle(suptitle, **stitle_kws)
+    
 
+    suptitle_has_chinese = True if re.search(u'[\u4e00-\u9fff]', suptitle) else False
+    
+    if suptitle_has_chinese:
+        chn_prop = font_manager.FontProperties(fname=chn_font_path)
+        plt.rcParams['font.sans-serif'] = chn_prop.get_name()
+    
+    plt.suptitle(suptitle, **stitle_kws)
+    
     return fig, axes

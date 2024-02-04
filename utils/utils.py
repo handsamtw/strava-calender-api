@@ -55,7 +55,7 @@ async def fetch_activities_with_sem(token, page_num, semaphore):
         return await _fetch_activities_async(token, page_num)
 
 async def _fetch_activities_async(token, page_num):
-    print("Page num: ", page_num)
+    
     url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
     headers = {"Authorization": f"Bearer {token}"}
     required_columns = ["name", "distance", "moving_time", "type", "start_date_local", "total_elevation_gain"]
@@ -69,6 +69,7 @@ async def _fetch_activities_async(token, page_num):
                 {col: activity[col] for col in required_columns}
                 for activity in activities
             ]
+            print(f"Page num: {page_num} - Count: {len(filtered_activities)}")
             return filtered_activities
         else:
             return None  
@@ -181,10 +182,11 @@ def plot_calendar(daily_summary, stat_summary, username, sport_type, unit="metri
             yearlabel_kws=yearlabel_kws
         )
         poweredby_text = "Power by @handsamtw - strava-calender.vercel.app"
-        fig.text(0.05, -0.05, poweredby_text,color='#ababab', fontsize=10)
-        fig.text(0.79, -0.05, f"unit: {unit_text}",color='#ababab', fontsize=9)
+        fig.text(0.05, -0.03, poweredby_text,color='#ababab', fontsize=10)
+        fig.text(0.79, -0.03, f"unit: {unit_text}",color='#ababab', fontsize=9)
+        dpi = 100
         with io.BytesIO() as buffer:
-            fig.savefig(buffer, bbox_inches="tight", dpi=200, format="png")
+            fig.savefig(buffer, bbox_inches="tight", dpi=dpi, format="png")
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
             image_dict[cur_theme] = encoded_img
@@ -267,7 +269,7 @@ def plot_calendar(daily_summary, stat_summary, username, sport_type, unit="metri
                                         axis=1).to_dict()
 
     suptitle = f"{username}'s {sport_type} on Strava" if username and sport_type else None
-    suptitle_kws = {"x":0.45, "y":1.04,"fontsize": 20, 'color': '#ababab'} if suptitle else None
+    suptitle_kws = {"fontsize": 20, 'color': '#ababab'} if suptitle else None
     yearlabel_kws = {"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"}
     # Initialize an empty dictionary to store encoded images
     image_dict = {}
