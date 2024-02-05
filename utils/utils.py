@@ -7,6 +7,13 @@ import asyncio
 import requests
 import pandas as pd
 import httpx
+
+MPLCONFIGDIR = "matplotlib-temp"
+if not os.path.exists(MPLCONFIGDIR):
+    os.makedirs(MPLCONFIGDIR)
+os.environ["MPLCONFIGDIR"] = MPLCONFIGDIR
+
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from utils import calplot
