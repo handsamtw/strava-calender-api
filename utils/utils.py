@@ -4,14 +4,13 @@ from base64 import b64encode
 from datetime import datetime, timedelta
 import concurrent.futures
 import asyncio
+import tempfile
 import requests
 import pandas as pd
 import httpx
 
-MPLCONFIGDIR = "matplotlib-temp"
-if not os.path.exists(MPLCONFIGDIR):
-    os.makedirs(MPLCONFIGDIR)
-os.environ["MPLCONFIGDIR"] = MPLCONFIGDIR
+temp_dir = tempfile.mkdtemp()
+os.environ["MPLCONFIGDIR"] = temp_dir
 
 
 import matplotlib as mpl
