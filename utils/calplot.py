@@ -25,7 +25,7 @@ eng_font_path = os.path.join(fonts_dir, "Arial.ttf")
 eng_prop = font_manager.FontProperties(fname=eng_font_path)
 
 # plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams["font.sans-serif"] = eng_prop.get_name()
+# plt.rcParams["font.sans-serif"] = eng_prop.get_name()
 
 
 def yearplot(
@@ -440,9 +440,9 @@ def calplot(
 
     suptitle_has_chinese = True if re.search("[\u4e00-\u9fff]", suptitle) else False
 
-    if suptitle_has_chinese:
-        chn_prop = font_manager.FontProperties(fname=kanji_font_path)
-        plt.rcParams["font.sans-serif"] = chn_prop.get_name()
+    # if suptitle_has_chinese:
+    #     chn_prop = font_manager.FontProperties(fname=kanji_font_path)
+    # plt.rcParams["font.sans-serif"] = chn_prop.get_name()
 
     plt.suptitle(suptitle, **stitle_kws)
 
