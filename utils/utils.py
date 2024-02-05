@@ -2,17 +2,14 @@ import io
 import os
 from base64 import b64encode
 from datetime import datetime, timedelta
-
+import concurrent.futures
+import asyncio
 import requests
 import pandas as pd
-from utils import calplot
-import concurrent.futures
+import httpx
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as font_manager
-
-import httpx
-import asyncio
+from utils import calplot
 
 mpl.use("agg")
 

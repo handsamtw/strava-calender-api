@@ -445,7 +445,7 @@ def calplot(
 
     if suptitle_has_chinese:
         chn_prop = font_manager.FontProperties(fname=kanji_font_path)
-    plt.rcParams["font.sans-serif"] = chn_prop.get_name()
+        plt.rcParams["font.sans-serif"] = chn_prop.get_name()
 
     plt.suptitle(suptitle, **stitle_kws)
 
