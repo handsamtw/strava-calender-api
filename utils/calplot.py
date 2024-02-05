@@ -22,12 +22,8 @@ font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
 
 for font_file in font_files:
     font_manager.fontManager.addfont(font_file)
-kanji_font_path = os.path.join(font_dirs, "ヒラギノ角ゴシック W0.ttc")
-eng_font_path = os.path.join(font_dirs, "Arial.ttf")
-eng_prop = font_manager.FontProperties(fname=eng_font_path)
 
-plt.rcParams["font.family"] = "sans-serif"
-plt.rcParams["font.sans-serif"] = eng_prop.get_name()
+kanji_font_path = os.path.join(font_dirs, "ヒラギノ角ゴシック W0.ttc")
 
 
 def yearplot(
@@ -439,13 +435,12 @@ def calplot(
             fig.colorbar(axes[0].get_children()[1], cax=cax, orientation="vertical")
 
     stitle_kws.update(suptitle_kws)
-
     suptitle_has_chinese = True if re.search("[\u4e00-\u9fff]", suptitle) else False
 
     if suptitle_has_chinese:
         chn_prop = font_manager.FontProperties(fname=kanji_font_path)
-        plt.rcParams["font.sans-serif"] = chn_prop.get_name()
-
-    plt.suptitle(suptitle, **stitle_kws)
+        plt.suptitle(suptitle, fontproperties=chn_prop, **stitle_kws)
+    else:
+        plt.suptitle(suptitle, **stitle_kws)
 
     return fig, axes
