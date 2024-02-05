@@ -6,13 +6,15 @@ from base64 import b64decode
 from pymongo import MongoClient
 
 from bson import ObjectId
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
 from cachetools import TTLCache
 from fastapi import FastAPI, Depends, Request
-import hashlib
+from hashlib import sha256
+from functools import partial
+from typing import Optional
 
 
 response_cache = TTLCache(maxsize=256, ttl=300)
@@ -75,11 +77,18 @@ def _get_uid_cache():
     return uid_cache
 
 
-def _get_hashed_url(request: Request):
-    # Use a hash function to generate the hash from the URL
-    url = request.url._url
-    hashed_url = hashlib.sha256(url.encode()).hexdigest()
-    return hashed_url
+# def _get_hashed_url(request: Request):
+#     # Use a hash function to generate the hash from the URL
+#     url = request.url._url
+#     hashed_url = hashlib.sha256(url.encode()).hexdigest()
+#     return hashed_url
+def _get_hashed_url(
+    uid: str,
+    sport_type: str,
+    unit: Optional[str] = "metric",
+) -> str:
+    data_to_hash = f"{uid}-{sport_type}-{unit}"
+    return sha256(data_to_hash.encode("utf-8")).hexdigest()
 
 
 @app.get("/")
@@ -107,6 +116,7 @@ def generate_user_id(code: str):
 async def get_activity_calendar(
     uid,
     sport_type,
+    background_tasks: BackgroundTasks,
     unit="metric",
     theme="All",
     as_image=False,
@@ -115,11 +125,11 @@ async def get_activity_calendar(
     activity_cache: TTLCache = Depends(_get_activity_cache),
 ):
     start = time.time()
+    cached_result = response_cache.get(hashed_url_cache_key, {}).get(theme)
 
-    if hashed_url_cache_key in response_cache:
+    if cached_result is not None:
         print("Cache hit!")
-        cached_result = response_cache.get(hashed_url_cache_key)
-        new_image_src = cached_result["image"]
+        plot_result = cached_result
 
     else:
         print("Cache miss")
@@ -174,16 +184,30 @@ async def get_activity_calendar(
                     {"$set": {"username": username}},
                 )
 
-            # bug: currently, if set is_parallel to True, 1 out of 7 images's color map bar will duplicate with image
-            new_image_src = plot_calendar(
-                daily_summary,
+            plot_result = plot_calendar(
+                daily_summary=daily_summary,
                 stat_summary=stat_summary,
-                unit=unit,
                 username=username,
                 sport_type=sport_type,
-                theme=theme,
-                is_parallel=False,
+                cmap=theme,
+                unit=unit,
+                cache_key=hashed_url_cache_key,
+                cache=response_cache,
             )
+            c_map = ["Reds", "YlGn", "Greens", "Blues", "PuBu", "RdPu", "twilight"]
+            filtered_c_map = [c for c in c_map if c != theme]
+            for cmap in filtered_c_map:
+                background_tasks.add_task(
+                    plot_calendar,
+                    daily_summary,
+                    stat_summary,
+                    username,
+                    sport_type,
+                    cmap,
+                    unit,
+                    hashed_url_cache_key,
+                    response_cache,
+                )
 
         else:
             error_message = {"error": "No activity found in this account"}
@@ -191,19 +215,11 @@ async def get_activity_calendar(
                 status_code=404, detail="No activity found in this Strava account"
             )
 
-    # Cache the result
-    result = {"image": new_image_src}
-
-    response_cache[hashed_url_cache_key] = result
-
+    # Decode the base64 string to bytes
+    image_data = b64decode(plot_result)
+    response = StreamingResponse(io.BytesIO(image_data), media_type="image/png")
     print(f"Run time: {(time.time() - start):,.2f}")
-    if as_image and as_image.lower() == "true":
-        # Decode the base64 string to bytes
-        image_data = b64decode(new_image_src[theme])
-        response = StreamingResponse(io.BytesIO(image_data), media_type="image/png")
-        return response
-
-    return result
+    return response
 
 
 @app.get("/check_valid_uid")

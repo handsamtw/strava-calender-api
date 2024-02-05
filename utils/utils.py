@@ -181,23 +181,19 @@ def summarize_activity(activities, sport_type=None):
 
 
 def plot_calendar(
-    daily_summary,
-    stat_summary,
-    username,
-    sport_type,
-    unit="metric",
-    theme="Reds",
-    is_parallel=True,
+    daily_summary, stat_summary, username, sport_type, cmap, unit, cache_key, cache
 ):
+    if cache_key not in cache:
+        cache[cache_key] = {}
 
-    def generate_heatmap(cur_theme):
+    def generate_heatmap(cmap):
         fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0] / unit_factor,
             yearascending=False,
             ax_title=stat_text_dict,
             suptitle=suptitle,
             suptitle_kws=suptitle_kws,
-            cmap=cur_theme,
+            cmap=cmap,
             linewidth=1,
             linecolor="white",
             edgecolor=None,
@@ -210,33 +206,8 @@ def plot_calendar(
             fig.savefig(buffer, bbox_inches="tight", dpi=200, format="png")
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
-            image_dict[cur_theme] = encoded_img
-        plt.close()
-
-    """
-    Plots a calendar heatmap based on the daily summary data.
-
-    Args:
-        daily_summary (pandas.DataFrame): A DataFrame containing daily summary data
-        theme (str, optional): The color theme for the calendar heatmap. Default is 'Reds'.
-            Available themes: 'Reds', 'BuGn', 'Greens', 'Blues', 'PuBu', 'RdPu', 'twilight',
-            or 'All' to generate images for all available themes.
-
-    Returns:
-        dict: A dictionary containing base64 encoded images of calendar heatmaps generated
-            based on the provided daily summary data and selected theme(s).
-    """
-
-    # Initialize a color map dictionary for different themes
-    c_map = {
-        "Reds": "Reds",
-        "YlGn": "YlGn",
-        "Greens": "Greens",
-        "Blues": "Blues",
-        "PuBu": "PuBu",
-        "RdPu": "RdPu",
-        "twilight": "twilight",
-    }
+            plt.close()
+            return encoded_img
 
     unit_info = {
         "imperial": {
@@ -257,13 +228,6 @@ def plot_calendar(
         },
     }
 
-    # Determine which theme(s) to process
-    theme_to_process = (
-        list(c_map.keys())
-        if theme == "All"
-        else [theme] if theme in c_map else ["Reds"]
-    )
-
     if "distance" not in stat_summary:
         unit_factor = 60
         unit_text = "min"
@@ -275,7 +239,6 @@ def plot_calendar(
     else:
 
         unit_type = unit_info[unit.lower()]
-
         unit_factor = unit_type["distance_unit_factor"]
         unit_text = unit_type["distance_unit_text"]
         elev_unit_factor = unit_type["elev_unit_factor"]
@@ -302,19 +265,11 @@ def plot_calendar(
         {"x": 0.45, "y": 1.04, "fontsize": 20, "color": "#ababab"} if suptitle else None
     )
     yearlabel_kws = {"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"}
-    # Initialize an empty dictionary to store encoded images
-    image_dict = {}
 
-    # Generate calendar heatmap for each theme in 'theme_to_process'
-    if is_parallel:
-        # Using ThreadPoolExecutor to parallelize heatmap generation
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            executor.map(generate_heatmap, theme_to_process)
-    else:
-        for theme in theme_to_process:
-            generate_heatmap(theme)
+    image = generate_heatmap(cmap)
+    cache[cache_key].update({cmap: image})
 
-    return image_dict
+    return image
 
 
 def refresh_access_token_if_expired(user):
