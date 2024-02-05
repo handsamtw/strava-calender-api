@@ -14,11 +14,10 @@ import pandas as pd
 from matplotlib.colors import ColorConverter, ListedColormap
 from matplotlib.patches import Polygon
 import matplotlib.pyplot as plt
-import matplotlib.font_manager as font_manager
-
+from matplotlib import font_manager
 
 root_dir = os.getcwd()
-font_dirs = os.path.join(root_dir, "public", "assets", "fonts")
+font_dirs = os.path.join(root_dir, "fonts")
 font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
 
 for font_file in font_files:
