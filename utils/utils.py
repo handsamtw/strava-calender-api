@@ -15,16 +15,6 @@ import httpx
 import asyncio
 
 mpl.use("agg")
-root_dir = os.getcwd()
-fonts_dir = os.path.join(root_dir, "public", "assets", "fonts")
-
-kanji_font_path = os.path.join(fonts_dir, "ヒラギノ角ゴシック W0.ttc")
-eng_font_path = os.path.join(fonts_dir, "Arial.ttf")
-eng_prop = font_manager.FontProperties(fname=eng_font_path)
-chn_prop = font_manager.FontProperties(fname=kanji_font_path)
-
-# plt.rcParams['font.family'] = 'sans-serif'
-plt.rcParams["font.sans-serif"] = chn_prop.get_name()
 
 
 async def get_all_activities(activity_cache, token):
@@ -198,7 +188,7 @@ def plot_calendar(
 ):
 
     def generate_heatmap(cur_theme):
-        fig, _, fontpath = calplot.calplot(
+        fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0] / unit_factor,
             yearascending=False,
             ax_title=stat_text_dict,

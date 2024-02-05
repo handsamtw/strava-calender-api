@@ -18,14 +18,17 @@ import matplotlib.font_manager as font_manager
 
 
 root_dir = os.getcwd()
-fonts_dir = os.path.join(root_dir, "public", "assets", "fonts")
+font_dirs = os.path.join(root_dir, "public", "assets", "fonts")
+font_files = font_manager.findSystemFonts(fontpaths=font_dirs)
 
-kanji_font_path = os.path.join(fonts_dir, "ヒラギノ角ゴシック W0.ttc")
-eng_font_path = os.path.join(fonts_dir, "Arial.ttf")
+for font_file in font_files:
+    font_manager.fontManager.addfont(font_file)
+kanji_font_path = os.path.join(font_dirs, "ヒラギノ角ゴシック W0.ttc")
+eng_font_path = os.path.join(font_dirs, "Arial.ttf")
 eng_prop = font_manager.FontProperties(fname=eng_font_path)
 
-# plt.rcParams['font.family'] = 'sans-serif'
-# plt.rcParams["font.sans-serif"] = eng_prop.get_name()
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["font.sans-serif"] = eng_prop.get_name()
 
 
 def yearplot(
@@ -440,10 +443,10 @@ def calplot(
 
     suptitle_has_chinese = True if re.search("[\u4e00-\u9fff]", suptitle) else False
 
-    # if suptitle_has_chinese:
-    #     chn_prop = font_manager.FontProperties(fname=kanji_font_path)
-    # plt.rcParams["font.sans-serif"] = chn_prop.get_name()
+    if suptitle_has_chinese:
+        chn_prop = font_manager.FontProperties(fname=kanji_font_path)
+    plt.rcParams["font.sans-serif"] = chn_prop.get_name()
 
     plt.suptitle(suptitle, **stitle_kws)
 
-    return fig, axes, plt.rcParams["font.sans-serif"]
+    return fig, axes
