@@ -204,19 +204,19 @@ async def get_activity_calendar(
             cache=response_cache,
         )
         c_map = ["Reds", "YlGn", "Greens", "Blues", "PuBu", "RdPu", "twilight"]
-        filtered_c_map = [c for c in c_map if c != theme]
-        for cmap in filtered_c_map:
-            background_tasks.add_task(
-                plot_calendar,
-                daily_summary,
-                stat_summary,
-                username,
-                sport_type,
-                cmap,
-                unit,
-                hashed_url_cache_key,
-                response_cache,
-            )
+        # filtered_c_map = [c for c in c_map if c != theme]
+        # for cmap in filtered_c_map:
+        #     background_tasks.add_task(
+        #         plot_calendar,
+        #         daily_summary,
+        #         stat_summary,
+        #         username,
+        #         sport_type,
+        #         cmap,
+        #         unit,
+        #         hashed_url_cache_key,
+        #         response_cache,
+        #     )
 
     # Decode the base64 string to bytes
     image_data = b64decode(plot_result)
