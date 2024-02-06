@@ -119,7 +119,6 @@ async def get_activity_calendar(
     background_tasks: BackgroundTasks,
     unit="metric",
     theme="All",
-    as_image=False,
     hashed_url_cache_key: str = Depends(_get_hashed_url),
     response_cache: TTLCache = Depends(_get_response_cache),
     activity_cache: TTLCache = Depends(_get_activity_cache),
@@ -134,17 +133,23 @@ async def get_activity_calendar(
     else:
         print("Cache miss")
         if not uid:
-            error_message = {"error": f"uid is required in query parameter"}
-            return JSONResponse(error_message), 404
+            raise HTTPException(
+                status_code=404,
+                detail="uid is required in query parameter",
+            )
 
         if not ObjectId.is_valid(uid):
-            error_message = {"error": "Invalid user id"}
-            return JSONResponse(error_message), 400
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid user id",
+            )
 
         user = users_collection.find_one({"_id": ObjectId(uid)})
         if not user:
-            error_message = {"error": "User was not found in database"}
-            return JSONResponse(error_message), 404
+            raise HTTPException(
+                status_code=404,
+                detail="User was not found in database",
+            )
 
         access_token = user["access_token"]
         refresh_token_response, status_code = refresh_access_token_if_expired(user)
@@ -163,56 +168,54 @@ async def get_activity_calendar(
             )
             access_token = refresh_token_response["access_token"]
 
-        activities, status_code = await get_all_activities(activity_cache, access_token)
-
-        if status_code == 200 and len(activities) > 0:
-            daily_summary, stat_summary = summarize_activity(
-                activities, sport_type=sport_type
-            )
-            if daily_summary.empty:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"No  {sport_type} activity found in your Strava",
-                )
-
-            username = user.get("username", None)
-
-            if username is None:
-                username = get_user_name(access_token)
-                users_collection.update_one(
-                    {"_id": ObjectId(uid)},
-                    {"$set": {"username": username}},
-                )
-
-            plot_result = plot_calendar(
-                daily_summary=daily_summary,
-                stat_summary=stat_summary,
-                username=username,
-                sport_type=sport_type,
-                cmap=theme,
-                unit=unit,
-                cache_key=hashed_url_cache_key,
-                cache=response_cache,
-            )
-            c_map = ["Reds", "YlGn", "Greens", "Blues", "PuBu", "RdPu", "twilight"]
-            filtered_c_map = [c for c in c_map if c != theme]
-            for cmap in filtered_c_map:
-                background_tasks.add_task(
-                    plot_calendar,
-                    daily_summary,
-                    stat_summary,
-                    username,
-                    sport_type,
-                    cmap,
-                    unit,
-                    hashed_url_cache_key,
-                    response_cache,
-                )
-
-        else:
-            error_message = {"error": "No activity found in this account"}
+        activities = await get_all_activities(activity_cache, access_token)
+        if len(activities) <= 0:
             raise HTTPException(
-                status_code=404, detail="No activity found in this Strava account"
+                status_code=404,
+                detail="No activity found in this Strava account",
+            )
+
+        daily_summary, stat_summary = summarize_activity(
+            activities, sport_type=sport_type
+        )
+        if daily_summary.empty:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No  {sport_type} activity found in your Strava",
+            )
+
+        username = user.get("username", None)
+
+        if username is None:
+            username = get_user_name(access_token)
+            users_collection.update_one(
+                {"_id": ObjectId(uid)},
+                {"$set": {"username": username}},
+            )
+
+        plot_result = plot_calendar(
+            daily_summary=daily_summary,
+            stat_summary=stat_summary,
+            username=username,
+            sport_type=sport_type,
+            cmap=theme,
+            unit=unit,
+            cache_key=hashed_url_cache_key,
+            cache=response_cache,
+        )
+        c_map = ["Reds", "YlGn", "Greens", "Blues", "PuBu", "RdPu", "twilight"]
+        filtered_c_map = [c for c in c_map if c != theme]
+        for cmap in filtered_c_map:
+            background_tasks.add_task(
+                plot_calendar,
+                daily_summary,
+                stat_summary,
+                username,
+                sport_type,
+                cmap,
+                unit,
+                hashed_url_cache_key,
+                response_cache,
             )
 
     # Decode the base64 string to bytes

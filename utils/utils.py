@@ -35,7 +35,7 @@ async def get_all_activities(activity_cache, token):
 
     if token in activity_cache:
         print("actvitiy cache hit!")
-        return activity_cache[token], 200
+        return activity_cache[token]
 
     max_page_num = activity_num_estimator(token)
     semaphore = asyncio.Semaphore(14)  # Limit the number of concurrent requests to 12
@@ -50,7 +50,7 @@ async def get_all_activities(activity_cache, token):
         if filtered_activity is not None:
             result_list.extend(filtered_activity)
     activity_cache[token] = result_list
-    return result_list, 200
+    return result_list
 
 
 async def fetch_activities_with_sem(token, page_num, semaphore):
