@@ -2,7 +2,6 @@ import io
 import os
 from base64 import b64encode
 from datetime import datetime, timedelta
-import concurrent.futures
 import asyncio
 import tempfile
 import requests

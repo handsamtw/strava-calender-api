@@ -6,14 +6,13 @@ from base64 import b64decode
 from pymongo import MongoClient
 
 from bson import ObjectId
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
 from cachetools import TTLCache
-from fastapi import FastAPI, Depends, Request
+from fastapi import FastAPI, Depends
 from hashlib import sha256
-from functools import partial
 from typing import Optional
 
 
@@ -77,11 +76,6 @@ def _get_uid_cache():
     return uid_cache
 
 
-# def _get_hashed_url(request: Request):
-#     # Use a hash function to generate the hash from the URL
-#     url = request.url._url
-#     hashed_url = hashlib.sha256(url.encode()).hexdigest()
-#     return hashed_url
 def _get_hashed_url(
     uid: str,
     sport_type: str,
@@ -116,7 +110,6 @@ def generate_user_id(code: str):
 async def get_activity_calendar(
     uid,
     sport_type,
-    background_tasks: BackgroundTasks,
     unit="metric",
     theme="All",
     hashed_url_cache_key: str = Depends(_get_hashed_url),
@@ -203,20 +196,6 @@ async def get_activity_calendar(
             cache_key=hashed_url_cache_key,
             cache=response_cache,
         )
-        c_map = ["Reds", "YlGn", "Greens", "Blues", "PuBu", "RdPu", "twilight"]
-        filtered_c_map = [c for c in c_map if c != theme]
-        for cmap in filtered_c_map:
-            background_tasks.add_task(
-                plot_calendar,
-                daily_summary,
-                stat_summary,
-                username,
-                sport_type,
-                cmap,
-                unit,
-                hashed_url_cache_key,
-                response_cache,
-            )
 
     # Decode the base64 string to bytes
     image_data = b64decode(plot_result)
