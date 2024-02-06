@@ -2,7 +2,6 @@ import io
 import os
 from base64 import b64encode
 from datetime import datetime, timedelta
-import concurrent.futures
 import asyncio
 import tempfile
 import requests
@@ -187,7 +186,6 @@ def plot_calendar(
         cache[cache_key] = {}
 
     def generate_heatmap(cmap):
-        print(cmap)
         fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0] / unit_factor,
             yearascending=False,
