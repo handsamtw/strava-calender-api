@@ -187,6 +187,7 @@ def plot_calendar(
         cache[cache_key] = {}
 
     def generate_heatmap(cmap):
+        print(cmap)
         fig, _ = calplot.calplot(
             daily_summary.iloc[:, 0] / unit_factor,
             yearascending=False,
