@@ -6,19 +6,14 @@ from base64 import b64decode
 from pymongo import MongoClient
 
 from bson import ObjectId
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.responses import StreamingResponse
 from cachetools import TTLCache
-from fastapi import FastAPI, Depends
-from hashlib import sha256
-from typing import Optional
 
 
-response_cache = TTLCache(maxsize=256, ttl=300)
 activity_cache = TTLCache(maxsize=256, ttl=600)
-uid_cache = TTLCache(maxsize=256, ttl=300)
 from dotenv import load_dotenv
 
 # Add project_root to the sys.path
@@ -64,31 +59,16 @@ app.add_middleware(
 )
 
 
-def _get_response_cache():
-    return response_cache
-
-
 def _get_activity_cache():
     return activity_cache
 
 
-def _get_uid_cache():
-    return uid_cache
-
-
-def _get_hashed_url(
-    uid: str,
-    sport_type: str,
-    unit: Optional[str] = "metric",
-) -> str:
-    data_to_hash = f"{uid}-{sport_type}-{unit}"
-    return sha256(data_to_hash.encode("utf-8")).hexdigest()
-
-
 @app.get("/")
 async def root():
+    print("here")
+    cache_headers = {"Cache-Control": "public, max-age=600"}
     result = {"Welcome to Strava-calendar-api": "Thank you for the contribution!"}
-    return result
+    return JSONResponse(content=result, headers=cache_headers)
 
 
 @app.get("/uid")
@@ -112,13 +92,10 @@ async def get_activity_calendar(
     sport_type,
     unit="metric",
     theme="All",
-    hashed_url_cache_key: str = Depends(_get_hashed_url),
-    response_cache: TTLCache = Depends(_get_response_cache),
     activity_cache: TTLCache = Depends(_get_activity_cache),
 ):
     start = time.time()
-    cached_result = response_cache.get(hashed_url_cache_key, {}).get(theme)
-
+    cached_result = None
     if cached_result is not None:
         print("Cache hit!")
         plot_result = cached_result
@@ -193,13 +170,14 @@ async def get_activity_calendar(
             sport_type=sport_type,
             cmap=theme,
             unit=unit,
-            cache_key=hashed_url_cache_key,
-            cache=response_cache,
         )
 
     # Decode the base64 string to bytes
     image_data = b64decode(plot_result)
-    response = StreamingResponse(io.BytesIO(image_data), media_type="image/png")
+    cache_headers = {"Cache-Control": "public, max-age=300"}
+    response = StreamingResponse(
+        io.BytesIO(image_data), media_type="image/png", headers=cache_headers
+    )
     print(f"Run time: {(time.time() - start):,.2f}")
     return response
 
@@ -207,16 +185,11 @@ async def get_activity_calendar(
 @app.get("/check_valid_uid")
 def check_valid_uid(
     uid: str,
-    uid_cache: TTLCache = Depends(_get_uid_cache),
 ):
     is_valid = False
-    if uid in uid_cache:
-        return {"is_valid": uid_cache[uid]}
 
     if ObjectId.is_valid(uid):
         user = users_collection.find_one({"_id": ObjectId(uid)})
         is_valid = user is not None and "access_token" in user
-        uid_cache[uid] = is_valid
-        return {"is_valid": is_valid}
-
-    return {"is_valid": is_valid}
+    cache_headers = {"Cache-Control": "public, max-age=600"}
+    return JSONResponse(content={"is_valid": is_valid}, headers=cache_headers)

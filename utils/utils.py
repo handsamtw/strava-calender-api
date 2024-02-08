@@ -179,11 +179,7 @@ def summarize_activity(activities, sport_type=None):
     return daily_summary, stat_summary
 
 
-def plot_calendar(
-    daily_summary, stat_summary, username, sport_type, cmap, unit, cache_key, cache
-):
-    if cache_key not in cache:
-        cache[cache_key] = {}
+def plot_calendar(daily_summary, stat_summary, username, sport_type, cmap, unit):
 
     def generate_heatmap(cmap):
         fig, _ = calplot.calplot(
@@ -266,7 +262,6 @@ def plot_calendar(
     yearlabel_kws = {"fontsize": 32, "color": "Gainsboro", "fontname": "Arial"}
 
     image = generate_heatmap(cmap)
-    cache[cache_key].update({cmap: image})
 
     return image
 
