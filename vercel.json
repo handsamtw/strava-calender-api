@@ -9,13 +9,5 @@
           "memory": 3008,
           "excludeFiles": "{.next,*.cache,public,docs,node_modules,app}/**"
         }
-      },
-      "headers": [
-        {
-          "source": "/api/(.*)",
-          "headers": [
-            { "key": "Cache-Control", "value": "public, max-age=3600" }
-          ]
-        }
-      ]
+      }
 }
