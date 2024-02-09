@@ -349,12 +349,15 @@ def request_token(code):
     }
 
     response = requests.request("POST", url, data=payload)
+
     if response.status_code == 200:
         data = response.json()
+        username = get_user_name(data["access_token"])
         return {
             "access_token": data["access_token"],
             "refresh_token": data["refresh_token"],
             "expires_at": data["expires_at"],
+            "username": username,
         }, 200
 
     return response.json(), response.status_code
