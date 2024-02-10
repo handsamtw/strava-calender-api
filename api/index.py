@@ -33,12 +33,11 @@ from utils.utils import (
 load_dotenv()
 env = os.environ
 
-
+mongo_url = env.get("MONGODB_URL")
 mongopass = env.get("MONGODB_PASSWORD")
-
+mongo_username = env.get("MONGODB_USERNAME")
 # Connect to MongoDB
-uri = f"mongodb+srv://samliao:{mongopass}@cluster0.7zimm5o.mongodb.net/?retryWrites=true&w=majority"
-client = MongoClient(uri, username="samliao", password=mongopass)
+client = MongoClient(mongo_url, username=mongo_username, password=mongopass)
 db = client["strava-calendar"]
 users_collection = db["users"]
 
