@@ -14,6 +14,7 @@ from cachetools import TTLCache
 
 
 activity_cache = TTLCache(maxsize=256, ttl=600)
+plot_cache = TTLCache(maxsize=64, ttl=600)
 from dotenv import load_dotenv
 
 # Add project_root to the sys.path
@@ -95,13 +96,13 @@ async def get_activity_calendar(
     activity_cache: TTLCache = Depends(_get_activity_cache),
 ):
     start = time.time()
-    cached_result = None
-    if cached_result is not None:
-        print("Cache hit!")
-        plot_result = cached_result
+    plot_cache_key = (uid, sport_type, unit, theme)
+    if plot_cache_key in plot_cache:
+        print("Plot cache hit!")
+        plot_result = plot_cache[plot_cache_key]
 
     else:
-        print("Cache miss")
+        print("Plot cache miss")
         if not uid:
             raise HTTPException(
                 status_code=404,
@@ -122,7 +123,7 @@ async def get_activity_calendar(
             )
 
         access_token = user["access_token"]
-        refresh_token_response, status_code = refresh_access_token_if_expired(user)
+        refresh_token_response, status_code = await refresh_access_token_if_expired(user)
         if status_code != 200:
             return refresh_token_response, status_code
         if refresh_token_response:
@@ -157,7 +158,7 @@ async def get_activity_calendar(
         username = user.get("username", None)
 
         if username is None:
-            username = get_user_name(access_token)
+            username = await get_user_name(access_token)
             users_collection.update_one(
                 {"_id": ObjectId(uid)},
                 {"$set": {"username": username}},
@@ -171,6 +172,7 @@ async def get_activity_calendar(
             cmap=theme,
             unit=unit,
         )
+        plot_cache[plot_cache_key] = plot_result
 
     # Decode the base64 string to bytes
     image_data = b64decode(plot_result)
