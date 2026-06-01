@@ -4,7 +4,6 @@ from base64 import b64encode
 from datetime import datetime, timedelta
 import asyncio
 import tempfile
-import requests
 import pandas as pd
 import httpx
 
@@ -22,45 +21,50 @@ mpl.use("agg")
 async def get_all_activities(activity_cache, token):
     """
     Retrieves all activities using the provided token from the Strava API.
-
-    Args:
-        token (str): Access token for Strava API.
-
-    Returns:
-        tuple: A tuple containing a list of activities and a status code.
-               - If successful, returns a list of activity data and status code 200.
-               - If there's an error, returns the error response and its status code.
+    Uses a single shared httpx client for connection reuse across all page fetches.
     """
 
     if token in activity_cache:
         print("actvitiy cache hit!")
         return activity_cache[token]
 
-    max_page_num = activity_num_estimator(token)
-    semaphore = asyncio.Semaphore(14)  # Limit the number of concurrent requests to 12
-    tasks = []
-    for page_num in range(1, max_page_num):
-        tasks.append(fetch_activities_with_sem(token, page_num, semaphore))
+    headers = {"Authorization": f"Bearer {token}"}
+    timeout = httpx.Timeout(timeout=30.0)
+    semaphore = asyncio.Semaphore(14)
 
-    filtered_activities = await asyncio.gather(*tasks)
-    result_list = []
+    async with httpx.AsyncClient(headers=headers, timeout=timeout) as client:
+        # Probe pages 4 and 8 concurrently to estimate depth, then fetch everything
+        probe4, probe8 = await asyncio.gather(
+            _fetch_page(client, 4),
+            _fetch_page(client, 8),
+        )
+        if not probe4:
+            max_page_num = 4
+        elif not probe8:
+            max_page_num = 8
+        else:
+            max_page_num = 15
 
-    for filtered_activity in filtered_activities:
-        if filtered_activity is not None:
-            result_list.extend(filtered_activity)
+        # Fetch all remaining pages in parallel (probed pages are re-fetched; results are fast)
+        tasks = [
+            _fetch_page_with_sem(client, page_num, semaphore)
+            for page_num in range(1, max_page_num)
+        ]
+        pages = await asyncio.gather(*tasks)
+
+    result_list = [act for page in pages if page for act in page]
     activity_cache[token] = result_list
     return result_list
 
 
-async def fetch_activities_with_sem(token, page_num, semaphore):
+async def _fetch_page_with_sem(client, page_num, semaphore):
     async with semaphore:
-        return await _fetch_activities_async(token, page_num)
+        return await _fetch_page(client, page_num)
 
 
-async def _fetch_activities_async(token, page_num):
+async def _fetch_page(client, page_num):
     print("Page num: ", page_num)
     url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
-    headers = {"Authorization": f"Bearer {token}"}
     required_columns = [
         "name",
         "distance",
@@ -69,30 +73,17 @@ async def _fetch_activities_async(token, page_num):
         "start_date_local",
         "total_elevation_gain",
     ]
-    timeout = httpx.Timeout(timeout=30.0)
-    async with httpx.AsyncClient(headers=headers, timeout=timeout) as client:
-
-        response = await client.get(url)
-        if response.status_code == 200:
-            activities = response.json()
-            filtered_activities = [
-                {col: activity[col] for col in required_columns}
-                for activity in activities
-            ]
-            return filtered_activities
-        else:
-            return None
-
-
-def _fetch_activities_sync(token, page_num):
-    headers = {"Authorization": f"Bearer {token}"}
-    url = f"https://www.strava.com/api/v3/activities?page={page_num}&per_page=200"
-    response = requests.get(url, headers=headers)
+    response = await client.get(url)
     if response.status_code == 200:
         activities = response.json()
-        return activities
-    else:
-        return None
+        if not activities:
+            return None
+        return [
+            {col: activity[col] for col in required_columns}
+            for activity in activities
+        ]
+    return None
+
 
 
 def summarize_activity(activities, sport_type=None):
@@ -198,7 +189,7 @@ def plot_calendar(daily_summary, stat_summary, username, sport_type, cmap, unit)
         fig.text(0.05, -0.05, poweredby_text, color="#ababab", fontsize=10)
         fig.text(0.79, -0.05, f"unit: {unit_text}", color="#ababab", fontsize=9)
         with io.BytesIO() as buffer:
-            fig.savefig(buffer, bbox_inches="tight", dpi=200, format="png")
+            fig.savefig(buffer, bbox_inches="tight", dpi=150, format="png")
             buffer.seek(0)
             encoded_img = b64encode(buffer.getvalue()).decode("utf-8")
             plt.close()
@@ -266,16 +257,9 @@ def plot_calendar(daily_summary, stat_summary, username, sport_type, cmap, unit)
     return image
 
 
-def refresh_access_token_if_expired(user):
+async def refresh_access_token_if_expired(user):
     """
     Refreshes the access token if the provided user's token is expired or about to expire within 30 minutes.
-
-    Args:
-        user (dict): A dictionary containing user information including 'expires_at' and 'refresh_token'.
-
-    Returns:
-        dict or None: If the access token is refreshed successfully, returns the updated token information
-            (access token, refresh token, expires_at). Returns None if no token refresh was performed.
     """
     if expire_in_n_minutes(user["expires_at"], 30):
         refresh_token_url = os.getenv("REFRESH_TOKEN_URL")
@@ -285,8 +269,8 @@ def refresh_access_token_if_expired(user):
             "grant_type": "refresh_token",
             "refresh_token": user["refresh_token"],
         }
-        response = requests.post(refresh_token_url, data=refresh_data)
-
+        async with httpx.AsyncClient() as client:
+            response = await client.post(refresh_token_url, data=refresh_data)
         return response.json(), response.status_code
 
     return {}, 200
@@ -320,39 +304,23 @@ def expire_in_n_minutes(expire_timestamp, minutes=30):
 def request_token(code):
     """
     Requests access and refresh tokens from an OAuth2 server using the provided authorization code.
-
-    Args:
-        code (str): The authorization code obtained from the authentication flow.
-
-    Returns:
-        tuple: A tuple containing token information and HTTP status code.
-            The token information is a dictionary with keys:
-                - 'access_token' (str): The access token for accessing protected resources.
-                - 'refresh_token' (str): The refresh token to obtain a new access token.
-                - 'expires_at' (str): The timestamp indicating token expiration.
-            The HTTP status code indicates the success or failure of the token request.
-
-    Raises:
-        None
+    Uses synchronous httpx since this is called from a sync FastAPI endpoint (runs in threadpool).
     """
     env = os.environ
     url = env.get("REQUEST_TOKEN_URL")
 
-    client_id = env.get("CLIENT_ID")
-    client_secret = env.get("CLIENT_SECRET")
-
     payload = {
-        "client_id": client_id,
-        "client_secret": client_secret,
+        "client_id": env.get("CLIENT_ID"),
+        "client_secret": env.get("CLIENT_SECRET"),
         "code": code,
         "grant_type": "authorization_code",
     }
 
-    response = requests.request("POST", url, data=payload)
+    response = httpx.post(url, data=payload)
 
     if response.status_code == 200:
         data = response.json()
-        username = get_user_name(data["access_token"])
+        username = _get_user_name_sync(data["access_token"])
         return {
             "access_token": data["access_token"],
             "refresh_token": data["refresh_token"],
@@ -363,36 +331,23 @@ def request_token(code):
     return response.json(), response.status_code
 
 
-# Deprecated
-def get_last_activity_id(access_token):
-    """
-    Fetches the ID of the last activity using the provided Strava access token.
-
-    Parameters:
-    - access_token (str): The Strava access token for authentication.
-
-    Returns:
-    Tuple[int, int] or Tuple[dict, int]: A tuple containing the last activity ID and HTTP status code (200),
-    or a tuple containing the error response JSON and the corresponding HTTP status code.
-    """
-    url = "https://www.strava.com/api/v3/activities?per_page=1&page=1"
+def _get_user_name_sync(access_token):
+    """Sync version used only by request_token (called from threadpool endpoint)."""
+    url = "https://www.strava.com/api/v3/athlete"
     headers = {"Authorization": f"Bearer {access_token}"}
-
-    response = requests.get(url, headers=headers)
-
+    response = httpx.get(url, headers=headers)
     if response.status_code == 200:
         data = response.json()
-        if isinstance(data, list) and len(data) > 0 and "id" in data[0]:
-            return data[0]["id"], 200
-
-    return response.json(), response.status_code
+        return data["firstname"] + " " + data["lastname"]
+    return ""
 
 
-def get_user_name(access_token):
+async def get_user_name(access_token):
     url = "https://www.strava.com/api/v3/athlete"
     headers = {"Authorization": f"Bearer {access_token}"}
 
-    response = requests.get(url, headers=headers)
+    async with httpx.AsyncClient(headers=headers) as client:
+        response = await client.get(url)
     if response.status_code == 200:
         data = response.json()
         return data["firstname"] + " " + data["lastname"]
@@ -400,17 +355,6 @@ def get_user_name(access_token):
     return ""
 
 
-def activity_num_estimator(token):
-    tier1 = _fetch_activities_sync(token, 4)
-    if not tier1:
-        return 4
-    else:
-        tier2 = _fetch_activities_sync(token, 8)
-        if not tier2:
-            return 8
-    return 15
-
-    # if user have more than 1000 activity, we classified as heavy user
 
 
 # def html_to_activity_image(activity_id):
