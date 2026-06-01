@@ -6,7 +6,7 @@
       "functions": {
         "api/**": {
           "maxDuration": 60,
-          "memory": 3008,
+          "memory": 1024,
           "excludeFiles": "{.next,*.cache,public,docs,node_modules,app}/**"
         }
       }
